@@ -1,3 +1,6 @@
+# Язык по-умолчанию:
+default_language = 'Ru'
+
 # Путь сохранения временных статических карт:
 temp_maps_folder = 'temp_maps/'
 
