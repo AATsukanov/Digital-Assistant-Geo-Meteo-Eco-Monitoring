@@ -3,9 +3,17 @@ import tkinter.messagebox as tkmb
 import tkinter.filedialog as tkfd
 import tkinter.simpledialog as tksd
 import os
+import threading
 
 import config
 import settings
+
+def onewtreadecorator(func):
+    '''Декорируем функции, которые хотим запустить в параллельном потоке'''
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=lambda: func(*args, **kwargs))
+        thread.start()
+    return wrapper
 
 class App(tk.Tk):
 
@@ -77,9 +85,12 @@ class App(tk.Tk):
     def on_project_stat(self):
         pass
 
+    @onewtreadecorator
     def on_run_telegram_bot(self):
         print('Запуск Telegram-бота...')
-        os.system('python main.py')
+        cmd_line = f'python main.py {settings.fparams_json}'
+        print(f'командой: {os.getcwd()}> {cmd_line}')
+        os.system(cmd_line)
 
     def on_app_settings(self):
         pass
@@ -114,7 +125,7 @@ class App(tk.Tk):
         self.destroy()
 
 def main():
-    print(f'{config.app_title}, версия = {config.version}')
+    print(f'"{config.app_title}", версия = {config.version}')
     print(f'(by {config.AuthorInfo.author})')
     app = App()
     app.mainloop()

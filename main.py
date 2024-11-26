@@ -10,6 +10,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import asyncio
 import logging
 import datetime
+import sys
 
 # импорт своих модулей
 import config
@@ -29,11 +30,14 @@ async def start(message):
     info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}) подключился'
     logging.info(info)
     print(info)
-    await message.answer(f'Здравствуйте, {message.from_user.username}!', reply_markup=kb.start_kb)
+    with open(config.welcome_img, 'rb') as img:
+        await message.answer_photo(img, f'Здравствуйте, {message.from_user.username}!', reply_markup=kb.start_kb)
 
 @dp.message_handler()
 async def all_messages(message):
     await message.answer('Для начала, пожалуйста, нажмите на команду /start')
 
 if __name__ == '__main__':
+    for j, param in enumerate(sys.argv):
+        print(f'{j}: sys.argv >> {param}')
     executor.start_polling(dp, skip_updates=True)

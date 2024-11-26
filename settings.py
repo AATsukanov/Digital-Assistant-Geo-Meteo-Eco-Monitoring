@@ -1,8 +1,18 @@
-# Язык по-умолчанию:
-default_language = 'Ru'
+import datetime
+
+# Имя *.json файла для передачи параметров при запуске Telegram-бота:
+fparams_json = f'params/exchange.{datetime.date.today()}.json'
 
 # Путь сохранения временных статических карт:
 temp_maps_folder = 'temp_maps/'
+
+# Путь к Таблицам по-умолчанию:
+tables_dir = 'tables/'
+table_devices_info = 'tables/DevicesInfo.xlsx'
+table_of_complects = 'tables/ComplectsTable.xlsx'
+
+# Язык по-умолчанию:
+default_language = 'Ru'
 
 # Сетка кнопок быстрого выбора комплекта приборов по GroupID (тип dict(int: list(int)):
 devices_GroupID_kb_layout = {
@@ -25,7 +35,7 @@ devices_GroupID_kb_layout = {
                             }
 
 # Поддерживаемые группы приборов (тип list[str]):
-devices_groups = ['A', 'B', 'C', 'D', 'E', 'F', 'G', '1-99']
+devices_groups = ['A', 'B', 'G', 'M', 'P', 'R', 'V', 'W', '1-99']
 
 # Файл с изображением прибора определенной группы:
 def device_image(device_group: str) -> str:
