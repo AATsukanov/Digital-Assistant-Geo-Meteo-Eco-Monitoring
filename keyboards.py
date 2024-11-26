@@ -8,6 +8,9 @@ start_kb = ReplyKeyboardMarkup(
             KeyboardButton(text='Свой профиль'),
         ],
         [
+            KeyboardButton(text='Проверить свои координаты', request_location=True)
+        ],
+        [
             KeyboardButton(text='Поддержка'),
             KeyboardButton(text='Информация')
         ],
