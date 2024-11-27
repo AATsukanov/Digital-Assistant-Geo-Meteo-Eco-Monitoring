@@ -56,25 +56,30 @@ def add_admins():
     connection.commit()
     connection.close()
 
-def check_user_in_db(user_id: int) -> bool:
+def is_user_in_db(user_id: int, echo: bool=False) -> bool:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
     check_user = cursor.execute('SELECT * FROM Users WHERE id=?', (user_id,))
-    if check_user.fetchone() is None:
+    check_user = check_user.fetchone()
+    if echo:
+        print('check_user_in_db:', not check_user is None)
+    if check_user is None:
         return False
     else:
         return True
 
-def add_user(user: User):
+def add_user(user: User, echo: bool=True):
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
 
     check_user = cursor.execute('SELECT * FROM Users WHERE id=?', (user.id,))
     if check_user.fetchone() is None:
-        cursor.execute(f'INSERT INTO User VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        cursor.execute(f'INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                        (user.id, user.first_name, user.last_name, user.username, user.language_code,
                         user.phone, user.country, user.city, user.birthdate, user.work_email))
         connection.commit()
+        if echo:
+            print(f'add_user: пользователь с id={user.id} добавлен в db Users')
 
     connection.close()
 

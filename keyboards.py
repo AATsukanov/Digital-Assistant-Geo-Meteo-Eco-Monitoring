@@ -1,6 +1,8 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
+from my_earth import Earth
+
 start_kb = ReplyKeyboardMarkup(
     keyboard=[
         [
@@ -8,7 +10,7 @@ start_kb = ReplyKeyboardMarkup(
             KeyboardButton(text='Свой профиль'),
         ],
         [
-            KeyboardButton(text='Проверить свои координаты', request_location=True)
+            KeyboardButton(text='Проверить свою геолокацию', request_location=True, )
         ],
         [
             KeyboardButton(text='Поддержка'),
@@ -19,3 +21,14 @@ start_kb = ReplyKeyboardMarkup(
         ]
     ], resize_keyboard=True
 )
+
+def make_map_kb(lat: float, lon: float) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text='На Яндекс карту', url=Earth.make_maps_yandex_url(lat, lon))],
+            [InlineKeyboardButton(text='На OSM карту', url=Earth.make_openstreetmap_url(lat, lon))],
+            [InlineKeyboardButton(text='На карту Google', url=Earth.make_maps_google_url(lat, lon))],
+            [InlineKeyboardButton(text='На nakarte.me', url=Earth.make_maps_nakarte_url(lat, lon))],
+            [InlineKeyboardButton(text='Назад', callback_data='back_to_start_kb')]
+        ]
+    )

@@ -9,7 +9,6 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import Message
 import asyncio
-import logging
 import datetime
 import os
 import sys
@@ -18,40 +17,41 @@ import json
 # импорт своих модулей
 import config
 import keyboards as kb
-#import admin
 import database as db
+from data_classes import User, Admin
+#import admin
 #import texts
-
-logging.basicConfig(level=logging.INFO, filename=f'logs/log.{datetime.date.today()}.txt', filemode='a',
-                    format='%(asctime)s\t%(levelname)s\t%(message)s', encoding='utf-8')
+from logger import logger
 
 bot = Bot(token=config.token)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 @dp.message_handler(commands=['start'])
 async def start(message: Message):
-    info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}) подключился'
-    logging.info(info)
-    print(info)
+    info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}) подключился {message.date}'
+    logger.info(info)
+    # Проверяем пользователя в users.db и добавляем открытые данные, если его нет:
+    if not db.is_user_in_db(message.from_id):
+        user = User(message.from_id)
+        user.fill_from_tg(message.from_user)
+        db.add_user(user)
     with open(config.welcome_img, 'rb') as img:
         await message.answer_photo(photo=img, caption=f'Здравствуйте, {message.from_user.username}!', reply_markup=kb.start_kb)
-    # Проверяем пользователя в users.db и добавляем открытые данные, если его нет:
-    print(message.location)
-    print(message.from_user.as_json())
-    #if not db.check_user_in_db(message.from_user.id):
-    #    db.add_user()
 
-@dp.message_handler(text=['Проверить свои координаты'])
+
+
+#@dp.message_handler(text=['Проверить своё позиционирование'])
+@dp.message_handler(content_types = ['location'])
 async def check_location(message: Message):
-    print(message.location.as_json())
-    #await message.answer(text=f'Ваши координаты: {message.location}')
+    lat, lon = message.location["latitude"], message.location["longitude"]
+    logger.info(f'{message.date} Проверка геопозиции @{message.from_user.username} ({message.from_id}): {lat}, {lon}')
+    await message.answer(text=f'Ваши координаты (LAT, LON): {lat}, {lon}', reply_markup=kb.make_map_kb(lat, lon))
 
 @dp.message_handler(commands=['end'])
 async def end(message: Message):
-    info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}) нажал "/end"'
-    logging.info(info)
-    print(info)
-    await message.answer(reply_markup=None)
+    info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}, {message.from_id}) нажал "/end"'
+    logger.info(info)
+    await message.delete_reply_markup()
 
 
 @dp.message_handler()
