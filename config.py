@@ -10,6 +10,7 @@ welcome_img = 'img/wpwd.png'
 
 token = tsukanoff.Telegram.token  # замените на Ваш Telegram-токен, например, token: str = 'AAААААААААААААААААААААА'
 admins = [tsukanoff.Telegram.id, ]  # добавьте в список Telegram-id администраторов, например, id: int = 76543210
+my_contact = tsukanoff.Telegram.my_contact  # здесь я использую своё @username из telegram
 
 language_icon = 'img/Ru-Cn.png'
 

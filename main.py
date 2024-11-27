@@ -20,11 +20,17 @@ import keyboards as kb
 import database as db
 from data_classes import User, Admin
 #import admin
-#import texts
+import helper
 from logger import logger
 
 bot = Bot(token=config.token)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
+
+async def on_startup(dispatcher: Dispatcher) -> None:
+    await bot.set_my_commands([
+        types.BotCommand('start', 'Запуск'),
+        types.BotCommand('help',  'Помощь')
+    ])
 
 @dp.message_handler(commands=['start'])
 async def start(message: Message):
@@ -47,6 +53,21 @@ async def check_location(message: Message):
     logger.info(f'{message.date} Проверка геопозиции @{message.from_user.username} ({message.from_id}): {lat}, {lon}')
     await message.answer(text=f'Ваши координаты (LAT, LON): {lat}, {lon}', reply_markup=kb.make_map_kb(lat, lon))
 
+@dp.message_handler(commands=['help'])
+async def help(message: Message):
+    await message.answer(text='Помощь \ поддержка...', reply_markup=kb.help_kb)
+
+
+@dp.callback_query_handler(text='instruction')
+async def instruction(call):
+    await call.message.answer(text=helper.instruction)
+    await call.answer()
+
+@dp.callback_query_handler(text='contact')
+async def contact_me(call):
+    await call.message.answer(f'По некоторым вопросам можно обратиться к разработчику.\nНапишите мне: {config.my_contact}.')
+    await call.answer()
+
 @dp.message_handler(commands=['end'])
 async def end(message: Message):
     info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}, {message.from_id}) нажал "/end"'
@@ -58,6 +79,7 @@ async def end(message: Message):
 async def all_messages(message: Message):
     await message.answer('Для начала, пожалуйста, нажмите на команду /start')
 
+
 def main():
     for j, param in enumerate(sys.argv):
         print(f'{j}: sys.argv >> {param}')
@@ -65,4 +87,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    executor.start_polling(dp, skip_updates=True)
+    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)
