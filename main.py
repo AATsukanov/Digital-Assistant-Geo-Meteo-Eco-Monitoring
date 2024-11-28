@@ -25,12 +25,19 @@ from logger import logger
 bot = Bot(token=config.token)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
+
+class UserStates(StatesGroup):
+    update_user_param = State()
+
+
+class WorkStates(StatesGroup):
+    pass
+
+
 class AdminStates(StatesGroup):
     activate_user = State()
     deactivate_user = State()
 
-class UserStates(StatesGroup):
-    update_user_param = State()
 
 async def on_startup(dispatcher: Dispatcher) -> None:
     await bot.set_my_commands([
@@ -56,6 +63,11 @@ async def start(message: Message):
         await message.answer_photo(photo=img, caption=f'Здравствуйте, {greeting_name}', reply_markup=kb.start_kb)
 
 
+@dp.message_handler(text='< на главное меню')
+async def back_start_menu(message: Message):
+    await message.answer('Главное меню:', reply_markup=kb.start_kb)
+
+
 @dp.callback_query_handler(text='back_user_profile')
 async def back_user_profile(call: CallbackQuery):
     await call.message.answer('Меню:', reply_markup=kb.user_profile_kb)
@@ -68,6 +80,7 @@ async def check_location(message: Message):
     lat, lon = message.location["latitude"], message.location["longitude"]
     logger.info(f'{message.date} Проверка геопозиции @{message.from_user.username} ({message.from_id}): {lat}, {lon}')
     await message.answer(text=f'Ваши координаты (LAT, LON): {lat}, {lon}', reply_markup=kb.make_map_kb(lat, lon))
+
 
 @dp.message_handler(text='Свой профиль')
 async def user_profile(message: Message):
@@ -144,12 +157,15 @@ async def support_contacts(call: CallbackQuery):
     await call.message.answer(text=text, parse_mode='html')
     await call.answer()
 
-@dp.message_handler(text='Начать работу')
+
+@dp.message_handler(text='Начать работу >')
 async def start_work(message: Message):
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
-    pass
+    await message.answer(text='Приступить к полевым работам', reply_markup=kb.work_menu_kb)
+
+
 
 
 @dp.message_handler(text='Информация')
@@ -157,12 +173,23 @@ async def info(message: Message):
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
-    await message.answer(text='Здесь будет техническая информация...')
+    await message.answer(text='Техническая информация', reply_markup=kb.field_info_kb)
+
+
+@dp.callback_query_handler(text='users_in_the_field')
+async def users_in_the_field(call: CallbackQuery):
+    text = db.get_users_in_the_field()
+    if text == '':
+        text = 'никто не отметился...'
+    await call.message.answer(text=f'<b>Полевой отряд:</b>\n\n{text}',
+                              parse_mode='html', reply_markup=kb.field_info_kb)
+    await call.answer()
 
 
 @dp.message_handler(commands=['end'])
 async def end(message: Message):
-    info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}, {message.from_id}) нажал "/end"'
+    info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} '\
+           f'(@{message.from_user.username}, {message.from_id}) нажал "/end"'
     logger.info(info)
     if db.user_completed_work(user_id=message.from_id):
         msg = 'Спасибо, Вы завершили работу!'
@@ -193,14 +220,14 @@ async def update_admin(call: CallbackQuery):
     a = Admin(id=call.from_user.id)
     a.update_from_tg(call.from_user)
     db.update_admin(a)
-    await call.message.answer(text=f'<b>Обновлено</b>:\n{db.show_admin(admin_id=a.id)}',
+    await call.message.answer(text=f'<b>Обновлено</b>:\n{db.get_admin(admin_id=a.id)}',
                               parse_mode='html')
     await call.answer()
 
 
 @dp.callback_query_handler(text='show_users')
 async def show_users(call: CallbackQuery):
-    text = f'<b>СПЕЦИАЛИСТЫ</b>\n\n{db.show_users()}'
+    text = f'<b>СПЕЦИАЛИСТЫ</b>\n\n{db.get_users()}'
     await call.message.answer(text=text,
                               parse_mode='html',
                               reply_markup=kb.activate_deactivate_kb)
@@ -209,7 +236,7 @@ async def show_users(call: CallbackQuery):
 
 @dp.callback_query_handler(text='show_admins')
 async def show_admins(call: CallbackQuery):
-    text = f'<b>КООРДИНАТОРЫ</b>\n\n{db.show_admins()}'
+    text = f'<b>КООРДИНАТОРЫ</b>\n\n{db.get_admins()}'
     await call.message.answer(text=text, parse_mode='html')
     await call.answer()
 

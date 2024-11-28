@@ -7,6 +7,7 @@ import threading
 
 import config
 import settings
+from datatypes import Task
 
 def onewtreadecorator(func):
     '''Декорируем функции, которые хотим запустить в параллельном потоке'''
@@ -19,6 +20,7 @@ class App(tk.Tk):
 
     def __init__(self):
         super().__init__()  # запуск инициализации родительского класса
+        self.task = Task()  # объект задания
         self.init_GUI()
 
     def init_GUI(self):
@@ -76,8 +78,11 @@ class App(tk.Tk):
         # configure:
         self.config(menu=self.MenuBar)
 
-    def on_open_xlsx(self):
-        pass
+    def on_open_xlsx(self) -> bool:
+        fname = tkfd.askopenfilename(filetypes=[('Таблица Excel', '*.xlsx'), ('Все файлы', '*.*')])
+        self.task.load(fname)
+        my_earth
+        self.show_map()
 
     def on_open_kml(self):
         pass

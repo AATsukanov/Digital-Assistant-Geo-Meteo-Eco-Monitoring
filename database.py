@@ -179,7 +179,7 @@ def user_is_active(user_id: int) -> int:
     return is_active[0]
 
 
-def show_users():
+def get_users():
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
 
@@ -192,7 +192,19 @@ def show_users():
     return msg
 
 
-def show_admins():
+def get_users_in_the_field():
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+
+    users_list = cursor.execute('SELECT * FROM Users WHERE is_working_now = ? and is_active = ?', (1, 1))
+    msg = ''
+    for u in users_list:
+        msg += f'{u[0]}: {u[3]} {u[4]} @{u[5]} ({u[6]})\n\n'
+
+    connection.close()
+    return msg
+
+def get_admins():
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
 
@@ -205,7 +217,7 @@ def show_admins():
     return msg
 
 
-def show_admin(admin_id: int) -> str:
+def get_admin(admin_id: int) -> str:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
     admin = cursor.execute('SELECT * FROM Admins WHERE id = ?', (admin_id, )).fetchone()

@@ -1,10 +1,63 @@
 from dataclasses import dataclass
 import aiogram.types as aiotypes
+import pandas as pd
+import numpy as np
+import datetime
+import os
+
+import settings
+
+class Task:
+
+    def __init__(self):
+        self.ProjectName: str = ''
+        self.nPoint: int = 0  # количество проектных точек
+        self.fname_project_points: str = ''  # *.xlsx файл
+        self.recommended_group_of_devices = set(settings.devices_groups)
+        self.Point_ID = np.array([])
+        self.N_WGS84 = np.array([])
+        self.E_WGS84 = np.array([])
+        self.data_pd: pd.DataFrame = pd.DataFrame([])
+        self.TextTaskDetails: str = ''
+        self.date = datetime.date.today()
+
+    def load(self, fname: str, echo=True) -> bool:
+        if not os.path.isfile(fname):
+            if echo:
+                print(f'Task.load: файл {fname} не найден')
+            return False
+        try:
+            self.data_pd = pd.read_excel(fname)
+        except Exception as exc:
+            if echo:
+                print(f'Task.load: ошибка при чтении файла {fname} методом pd.read_excel\n{exc}')
+            return False
+        if echo:
+            print(f'Task.load: столбцы = {self.data_pd.columns}')
+
+
+
+        # если все удачно:
+        self.fname_project_points = fname
+        return True
+
+    def reset(self):
+        self.ProjectName: str = ''
+        self.nPoint: int = 0
+        self.fname_project_points: str = ''
+        self.recommended_group_of_devices = set(settings.devices_groups)
+        self.Point_ID = np.array([])
+        self.N_WGS84 = np.array([])
+        self.E_WGS84 = np.array([])
+        self.data_pd: pd.DataFrame = pd.DataFrame([])
+        self.TextTaskDetails: str = ''
+        self.date = datetime.date.today()
+
 
 @dataclass
 class User:
     id: int
-    is_working_now: int = 0  # 0 -- не в поле, 10 -- начал работу, 100 -- завершил работу
+    is_working_now: int = 0  # 0 - не в поле, 1 - в поле (или потом 10 -- начал работу, 100 -- завершил работу)
     is_active: int = 1  # аналог блокировки: 0 - не работает, 1 - работает
     first_name: str = ''
     last_name: str = ''
@@ -52,5 +105,3 @@ user_all_columns = ['id', 'is_working_now', 'is_active', 'first_name', 'last_nam
                     'phone', 'country', 'city', 'birthdate', 'work_email']
 
 user_changeable_columns = ['first_name', 'last_name', 'phone', 'country', 'city', 'birthdate', 'work_email']
-
-

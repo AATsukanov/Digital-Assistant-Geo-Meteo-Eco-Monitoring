@@ -2,6 +2,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from my_earth import Earth
+from settings import devices_GroupID_kb_layout, devices_groups
 
 start_kb = ReplyKeyboardMarkup(
     keyboard=[
@@ -10,14 +11,14 @@ start_kb = ReplyKeyboardMarkup(
             KeyboardButton(text='Свой профиль'),
         ],
         [
-            KeyboardButton(text='Проверить свою геолокацию', request_location=True, )
+            KeyboardButton(text='Проверить свою геолокацию', request_location=True,)
         ],
         [
             KeyboardButton(text='Поддержка'),
             KeyboardButton(text='Информация')
         ],
         [
-            KeyboardButton(text='Начать работу')
+            KeyboardButton(text='Начать работу >')
         ]
     ], resize_keyboard=True
 )
@@ -83,3 +84,25 @@ def make_map_kb(lat: float, lon: float) -> InlineKeyboardMarkup:
             ]
         ]
     )
+
+field_info_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='Проектные точки (актуальные)', callback_data='project_points')],
+        [InlineKeyboardButton(text='Комплекты приборов (с собой)', callback_data='project_devices')],
+        [InlineKeyboardButton(text='Полевой отряд (кто в работе)', callback_data='users_in_the_field')]
+    ]
+)
+
+work_menu_kb = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text='Определить ближайшие точки')],
+        [KeyboardButton(text='Установить прибор')],
+        [KeyboardButton(text='Снять прибор')],
+        [
+            KeyboardButton(text='Отправить заметку'),
+            KeyboardButton(text='< на главное меню')
+        ]
+    ], resize_keyboard=True
+)
+
+
