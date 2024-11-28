@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from aiogram import types
+import aiogram.types as aiotypes
 
 @dataclass
 class User:
@@ -16,7 +16,7 @@ class User:
     birthdate: str = 'ГГГГ-ММ-ДД'
     work_email: str = '(пусто)'
 
-    def fill_from_tg(self, user: types.user.User) -> None:
+    def fill_from_tg(self, user: aiotypes.user.User) -> None:
         if 'first_name' in user:
             self.first_name = user['first_name']
         if 'last_name' in user:
@@ -35,7 +35,7 @@ class Admin:
     username: str = '(пусто)'
     language_code: str = 'ru'
 
-    def update_from_tg(self, user: types.user.User, echo: bool = False) -> None:
+    def update_from_tg(self, user: aiotypes.user.User, echo: bool = False) -> None:
         if echo:
             print(f'Заполняем админ-пользователя из Telegram from_user = {user}')
         if 'first_name' in user:
@@ -48,4 +48,9 @@ class Admin:
             self.language_code = user['language_code']
 
 
+user_all_columns = ['id', 'is_working_now', 'is_active', 'first_name', 'last_name', 'username', 'language_code',
+                    'phone', 'country', 'city', 'birthdate', 'work_email']
+
 user_changeable_columns = ['first_name', 'last_name', 'phone', 'country', 'city', 'birthdate', 'work_email']
+
+

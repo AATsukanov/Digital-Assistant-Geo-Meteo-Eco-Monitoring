@@ -42,14 +42,33 @@ activate_deactivate_kb = InlineKeyboardMarkup(
     ]
 )
 
+
+user_profile_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='Подгрузить из tg-профиля', callback_data='update_user_from_telegram')],
+        [InlineKeyboardButton(text='Заполнить данные вручную', callback_data='update_user_by_user')],
+    ]
+)
+
+
+user_update_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [
+            InlineKeyboardButton(text='Заменить', callback_data='update_user_param'),
+            InlineKeyboardButton(text='Отменить', callback_data='back_user_profile')
+        ]
+    ]
+)
+
+
 help_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text='Краткое руководство', callback_data='instruction')],
         [InlineKeyboardButton(text='Связь с разработчиком', callback_data='contact_me')],
-        [InlineKeyboardButton(text='Контакты поддержки', callback_data='support_contacts')],
-        #[InlineKeyboardButton(text=' < назад', callback_data='back_start_menu')]
+        [InlineKeyboardButton(text='Контакты поддержки', callback_data='support_contacts')]
     ]
 )
+
 
 def make_map_kb(lat: float, lon: float) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
@@ -61,7 +80,6 @@ def make_map_kb(lat: float, lon: float) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(text='Google map', url=Earth.make_maps_google_url(lat, lon)),
                 InlineKeyboardButton(text='nakarte.me', url=Earth.make_maps_nakarte_url(lat, lon))
-            ],
-            #[InlineKeyboardButton(text=' < назад', callback_data='back_start_menu')]
+            ]
         ]
     )

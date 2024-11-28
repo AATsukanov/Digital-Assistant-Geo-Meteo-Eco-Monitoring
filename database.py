@@ -1,7 +1,9 @@
 import sqlite3
+import aiogram.types as aiotypes
 import config
 from datatypes import User, Admin
 from datatypes import user_changeable_columns
+
 
 
 def init_users_db():
@@ -118,6 +120,25 @@ def update_user(user_id: int, column_name: str, value: str) -> bool:
         connection.close()
         return False
 
+def update_user_from_tg(user_tg: aiotypes.user.User) -> bool:
+    user = User(user_tg.id)
+    user.fill_from_tg(user_tg)
+
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+
+    check = cursor.execute('SELECT * FROM Users WHERE id=?', (user.id,))
+    if not check.fetchone() is None:
+        cursor.execute(
+            f'UPDATE Users SET (first_name, last_name, username, language_code) = (?, ?, ?, ?) WHERE id = ?',
+            (user.first_name, user.last_name, user.username, user.language_code, user.id))
+        connection.commit()
+        connection.close()
+        return True
+    else:
+        connection.close()
+        return False
+
 
 def update_admin(admin: Admin) -> bool:
     connection = sqlite3.connect('databases/users.db')
@@ -148,6 +169,14 @@ def get_greeting_name(user_id: int) -> str:
     user = cursor.execute('SELECT * FROM Users WHERE id = ?', (user_id,)).fetchone()
     connection.close()
     return f'{user[3]} {user[4]}'
+
+
+def user_is_active(user_id: int) -> int:
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    is_active = cursor.execute('SELECT is_active FROM Users WHERE id = ?', (user_id,)).fetchone()
+    connection.close()
+    return is_active[0]
 
 
 def show_users():

@@ -14,9 +14,10 @@ import json
 
 # импорт своих модулей
 import config
+import datatypes
 import keyboards as kb
 import database as db
-from datatypes import User, Admin
+from datatypes import User, Admin, user_changeable_columns
 #import admin
 import docs
 from logger import logger
@@ -27,6 +28,9 @@ dp = Dispatcher(bot=bot, storage=MemoryStorage())
 class AdminStates(StatesGroup):
     activate_user = State()
     deactivate_user = State()
+
+class UserStates(StatesGroup):
+    update_user_param = State()
 
 async def on_startup(dispatcher: Dispatcher) -> None:
     await bot.set_my_commands([
@@ -52,24 +56,67 @@ async def start(message: Message):
         await message.answer_photo(photo=img, caption=f'Здравствуйте, {greeting_name}', reply_markup=kb.start_kb)
 
 
-@dp.callback_query_handler(text='back_start_menu')
-async def back_start_menu(call: CallbackQuery):
-    await call.message.answer('Меню:', reply_markup=kb.start_kb)
+@dp.callback_query_handler(text='back_user_profile')
+async def back_user_profile(call: CallbackQuery):
+    await call.message.answer('Меню:', reply_markup=kb.user_profile_kb)
     await call.answer()
 
 
 #@dp.message_handler(text=['Проверить своё позиционирование'])
-@dp.message_handler(content_types = ['location'])
+@dp.message_handler(content_types=['location'])
 async def check_location(message: Message):
     lat, lon = message.location["latitude"], message.location["longitude"]
     logger.info(f'{message.date} Проверка геопозиции @{message.from_user.username} ({message.from_id}): {lat}, {lon}')
     await message.answer(text=f'Ваши координаты (LAT, LON): {lat}, {lon}', reply_markup=kb.make_map_kb(lat, lon))
 
+@dp.message_handler(text='Свой профиль')
+async def user_profile(message: Message):
+    if db.user_is_active(message.from_id) == 0:
+        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
+        return
+    msg = '<b>Мой профиль</b>\n\n'
+    for column_name, value in zip(datatypes.user_all_columns, db.get_user(message.from_id)):
+        msg += f'<b>{column_name}</b>:\t{value}\n'
+    await message.answer(text=msg, parse_mode='html', reply_markup=kb.user_profile_kb)
+
+
+@dp.callback_query_handler(text='update_user_from_telegram')
+async def update_user_from_telegram(call: CallbackQuery):
+    db.update_user_from_tg(call.from_user)
+    await call.message.answer('Обновлено из telegram-профиля', reply_markup=kb.user_profile_kb)
+    await call.answer()
+
+
+@dp.callback_query_handler(text='update_user_by_user')
+async def update_user_by_user(call: CallbackQuery):
+    await call.message.answer('Введите имя поля и его значение через пробел, например:\n'
+                              'last_name Менделеев')
+    await call.answer()
+    await UserStates.update_user_param.set()
+
+
+@dp.message_handler(state=UserStates.update_user_param)
+async def update_user_param(message: Message, state: State) -> None:
+    text = message.text
+    if len(text.split(' ')) != 2:
+        await message.answer('Неверный формат', reply_markup=kb.user_profile_kb)
+        await state.finish()
+        return
+    column_name, value = text.split(' ')
+    column_name = column_name.lower()
+    uspex = db.update_user(message.from_id, column_name=column_name, value=value)
+    if uspex:
+        await message.answer(text=f'В поле "{column_name}" записано "{value}"', reply_markup=kb.user_profile_kb)
+    else:
+        await message.answer(text='Операция не выполнена, проверьте, пожалуйста, введенные данные.',
+                             reply_markup=kb.user_profile_kb)
+    await state.finish()
+
 
 @dp.message_handler(commands=['help'])
 @dp.message_handler(text=['Поддержка'])
 async def helper(message: Message):
-    await message.answer(text='Помощь \ поддержка...', reply_markup=kb.help_kb)
+    await message.answer(text='Помощь / поддержка', reply_markup=kb.help_kb)
 
 
 @dp.callback_query_handler(text='instruction')
@@ -96,6 +143,21 @@ async def support_contacts(call: CallbackQuery):
     text += f'страница автора: {config.AuthorInfo.author_page}'
     await call.message.answer(text=text, parse_mode='html')
     await call.answer()
+
+@dp.message_handler(text='Начать работу')
+async def start_work(message: Message):
+    if db.user_is_active(message.from_id) == 0:
+        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
+        return
+    pass
+
+
+@dp.message_handler(text='Информация')
+async def info(message: Message):
+    if db.user_is_active(message.from_id) == 0:
+        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
+        return
+    await message.answer(text='Здесь будет техническая информация...')
 
 
 @dp.message_handler(commands=['end'])
@@ -129,7 +191,6 @@ async def back_admin_panel(call: CallbackQuery):
 @dp.callback_query_handler(text='update_admin')
 async def update_admin(call: CallbackQuery):
     a = Admin(id=call.from_user.id)
-    print(type(call.from_user))
     a.update_from_tg(call.from_user)
     db.update_admin(a)
     await call.message.answer(text=f'<b>Обновлено</b>:\n{db.show_admin(admin_id=a.id)}',
