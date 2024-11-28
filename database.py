@@ -1,7 +1,7 @@
 import sqlite3
 import config
-import data_classes
-from data_classes import User, Admin
+from datatypes import User, Admin
+from datatypes import user_changeable_columns
 
 
 def init_users_db():
@@ -58,6 +58,7 @@ def add_admins():
     connection.commit()
     connection.close()
 
+
 def is_user_in_db(user_id: int, echo: bool=False) -> bool:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
@@ -69,6 +70,7 @@ def is_user_in_db(user_id: int, echo: bool=False) -> bool:
         return False
     else:
         return True
+
 
 def add_user(user: User, echo: bool=True):
     connection = sqlite3.connect('databases/users.db')
@@ -101,13 +103,13 @@ def add_admin(admin: Admin):
 
 
 def update_user(user_id: int, column_name: str, value: str) -> bool:
-    if not column_name in data_classes.user_changeable_columns:
+    if not column_name in user_changeable_columns:
         return False
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
 
     check_user = cursor.execute('SELECT * FROM Users WHERE id=?', (user_id,))
-    if check_user.fetchone() is None:
+    if not check_user.fetchone() is None:
         cursor.execute(f'UPDATE Users SET {column_name} = ? WHERE id = ?', (value, user_id))
         connection.commit()
         connection.close()
@@ -116,12 +118,37 @@ def update_user(user_id: int, column_name: str, value: str) -> bool:
         connection.close()
         return False
 
+
+def update_admin(admin: Admin) -> bool:
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+
+    check = cursor.execute('SELECT * FROM Admins WHERE id=?', (admin.id,))
+    if not check.fetchone() is None:
+        cursor.execute(f'UPDATE Admins SET (first_name, last_name, username, language_code) = (?, ?, ?, ?) WHERE id = ?',
+                       (admin.first_name, admin.last_name, admin.username, admin.language_code, admin.id))
+        connection.commit()
+        connection.close()
+        return True
+    else:
+        connection.close()
+        return False
+
+def get_user(user_id: int) -> str:
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    user = cursor.execute('SELECT * FROM Users WHERE id = ?', (user_id,)).fetchone()
+    connection.close()
+    return user
+
+
 def get_greeting_name(user_id: int) -> str:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
     user = cursor.execute('SELECT * FROM Users WHERE id = ?', (user_id,)).fetchone()
     connection.close()
     return f'{user[3]} {user[4]}'
+
 
 def show_users():
     connection = sqlite3.connect('databases/users.db')
@@ -130,7 +157,7 @@ def show_users():
     users_list = cursor.execute('SELECT * FROM Users')
     msg = ''
     for u in users_list:
-        msg += f'{u[0]}: {u[3]} {u[4]} @{u[5]} ({u[6]}) "в работе"={u[1]}, "is_active={u[2]}"\n'
+        msg += f'{u[0]}: {u[3]} {u[4]} @{u[5]} ({u[6]}) "в работе"={u[1]}, "is_active={u[2]}"\n\n'
 
     connection.close()
     return msg
@@ -143,8 +170,17 @@ def show_admins():
     admins_list = cursor.execute('SELECT * FROM Admins')
     msg = ''
     for a in admins_list:
-        msg += f'{a[0]}: {a[1]} {a[2]} @{a[3]} ({a[4]})\n'
+        msg += f'{a[0]}: {a[1]} {a[2]} @{a[3]} ({a[4]})\n\n'
 
+    connection.close()
+    return msg
+
+
+def show_admin(admin_id: int) -> str:
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    admin = cursor.execute('SELECT * FROM Admins WHERE id = ?', (admin_id, )).fetchone()
+    msg = f'{admin[0]}: {admin[1]} {admin[2]} @{admin[3]} ({admin[4]})'
     connection.close()
     return msg
 
@@ -160,7 +196,24 @@ def users_stat() -> tuple[int, int, int, int]:
     count_active_users = cursor.execute('SELECT COUNT(*) FROM Users WHERE is_active > 0').fetchone()
 
     connection.close()
-    return count_users, count_admins, count_users_in_work, count_active_users
+    return count_users[0], count_admins[0], count_users_in_work[0], count_active_users[0]
+
+
+def deactivate_user(user_id: int) -> None:
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    cursor.execute(f'UPDATE Users SET is_active = ? WHERE id = ?', (0, user_id))
+    connection.commit()
+    connection.close()
+
+
+def activate_user(user_id: int) -> None:
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    cursor.execute(f'UPDATE Users SET is_active = ? WHERE id = ?', (1, user_id))
+    connection.commit()
+    connection.close()
+
 
 def user_started_work(user_id: int) -> bool:
     '''Делает отметку о том, что специалист начал полевую работу,

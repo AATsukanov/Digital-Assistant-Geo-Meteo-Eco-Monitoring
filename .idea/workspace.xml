@@ -4,14 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e34ac076-2ed1-4318-80e1-46a0f0fd11eb" name="Changes" comment="Добавлено меню Телеграм-бота и вывод геопозиции в веб-версии карт">
+    <list default="true" id="e34ac076-2ed1-4318-80e1-46a0f0fd11eb" name="Changes" comment="Работаем над поддержкой и админкой">
+      <change afterPath="$PROJECT_DIR$/docs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/data_classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_classes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/datatypes.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/databases/users.db" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/helper.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/img/wpw.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/databases/users.db" beforeDir="false" afterPath="$PROJECT_DIR$/databases/users.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/helper.py" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/keyboards.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -49,7 +49,8 @@
     "Python.main.executor": "Run",
     "Python.test.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master"
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "C:/Users/Admin/YandexDisk/Urban University 2024/module14-бот_проект"
   }
 }]]></component>
   <component name="SharedIndexes">
@@ -100,7 +101,15 @@
       <option name="project" value="LOCAL" />
       <updated>1732743425588</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Работаем над поддержкой и админкой">
+      <option name="closed" value="true" />
+      <created>1732782141677</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1732782141677</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -108,6 +117,7 @@
     <MESSAGE value="Попытка запросить координаты полевого специалиста (FieldUser)" />
     <MESSAGE value="Добавлена проверка геопозиционирования" />
     <MESSAGE value="Добавлено меню Телеграм-бота и вывод геопозиции в веб-версии карт" />
-    <option name="LAST_COMMIT_MESSAGE" value="Добавлено меню Телеграм-бота и вывод геопозиции в веб-версии карт" />
+    <MESSAGE value="Работаем над поддержкой и админкой" />
+    <option name="LAST_COMMIT_MESSAGE" value="Работаем над поддержкой и админкой" />
   </component>
 </project>
