@@ -14,6 +14,8 @@ def init_users_db():
     cursor.execute('''
                     CREATE TABLE IF NOT EXISTS Users(
                     id INT NOT NULL UNIQUE,
+                    is_working_now INT NOT NULL,
+                    is_active INT NOT NULL,
                     first_name TEXT,
                     last_name TEXT,
                     username TEXT NOT NULL,
@@ -74,8 +76,9 @@ def add_user(user: User, echo: bool=True):
 
     check_user = cursor.execute('SELECT * FROM Users WHERE id=?', (user.id,))
     if check_user.fetchone() is None:
-        cursor.execute(f'INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-                       (user.id, user.first_name, user.last_name, user.username, user.language_code,
+        cursor.execute(f'INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                       (user.id, user.is_working_now, user.is_active,
+                        user.first_name, user.last_name, user.username, user.language_code,
                         user.phone, user.country, user.city, user.birthdate, user.work_email))
         connection.commit()
         if echo:
@@ -113,6 +116,12 @@ def update_user(user_id: int, column_name: str, value: str) -> bool:
         connection.close()
         return False
 
+def get_greeting_name(user_id: int) -> str:
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    user = cursor.execute('SELECT * FROM Users WHERE id = ?', (user_id,)).fetchone()
+    connection.close()
+    return f'{user[3]} {user[4]}'
 
 def show_users():
     connection = sqlite3.connect('databases/users.db')
@@ -121,7 +130,7 @@ def show_users():
     users_list = cursor.execute('SELECT * FROM Users')
     msg = ''
     for u in users_list:
-        msg += f'{u[0]}: {u[1]} {u[2]} @{u[3]} ({u[4]})\n'
+        msg += f'{u[0]}: {u[3]} {u[4]} @{u[5]} ({u[6]}) "в работе"={u[1]}, "is_active={u[2]}"\n'
 
     connection.close()
     return msg
@@ -140,15 +149,30 @@ def show_admins():
     return msg
 
 
-def users_stat() -> tuple[int, int]:
+def users_stat() -> tuple[int, int, int, int]:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
 
     count_users = cursor.execute('SELECT COUNT(*) FROM Users').fetchone()
     count_admins = cursor.execute('SELECT COUNT(*) FROM Admins').fetchone()
 
+    count_users_in_work = cursor.execute('SELECT COUNT(*) FROM Users WHERE is_working_now > 0').fetchone()
+    count_active_users = cursor.execute('SELECT COUNT(*) FROM Users WHERE is_active > 0').fetchone()
+
     connection.close()
-    return count_users, count_admins
+    return count_users, count_admins, count_users_in_work, count_active_users
+
+def user_started_work(user_id: int) -> bool:
+    '''Делает отметку о том, что специалист начал полевую работу,
+    возвращает False, если пользователь не активен и True в штатном случае.
+    '''
+    pass
+
+def user_completed_work(user_id: int) -> bool:
+    '''Делает отметку о том, что специалист закончил полевую работу,
+    возвращает False, если работа не была начата и True в штатном случае.
+    '''
+    pass
 
 
 # Принудительно производим инициализацию, чтобы сработала при импорте:

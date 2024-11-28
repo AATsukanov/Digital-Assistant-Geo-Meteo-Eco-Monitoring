@@ -4,10 +4,12 @@ from dataclasses import dataclass
 @dataclass
 class User:
     id: int
-    first_name: str = 'None'
-    last_name: str = 'None'
-    username: str = 'None'
-    language_code: str = 'None'
+    is_working_now: int = 0  # 0 -- не в поле, 10 -- начал работу, 100 -- завершил работу
+    is_active: int = 1  # аналог блокировки
+    first_name: str = ''
+    last_name: str = ''
+    username: str = '(не указан)'
+    language_code: str = 'ru'
     phone: str = '(пусто)'
     country: str = '(пусто)'
     city: str = '(пусто)'
@@ -42,4 +44,4 @@ class Admin:
         self.username = admin_json['username']
         self.language_code = admin_json['language_code']
 
-user_changeable_columns = ['phone', 'country', 'city', 'birthdate', 'work_email']
+user_changeable_columns = ['first_name', 'last_name', 'phone', 'country', 'city', 'birthdate', 'work_email']

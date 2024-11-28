@@ -22,11 +22,19 @@ start_kb = ReplyKeyboardMarkup(
     ], resize_keyboard=True
 )
 
+admin_kb = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='Список специалистов', callback_data='show_users')],
+        [InlineKeyboardButton(text='Список координаторов', callback_data='show_admins')],
+        [InlineKeyboardButton(text='Статистика и прогресс', callback_data='users_stat')]
+    ]
+)
+
 help_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text='Краткое руководство', callback_data='instruction')],
-        [InlineKeyboardButton(text='Связь с разработчиком', callback_data='contact')],
-        [InlineKeyboardButton(text='Назад', callback_data='back_to_start_kb')]
+        [InlineKeyboardButton(text='Связь с разработчиком', callback_data='contact_me')],
+        [InlineKeyboardButton(text='Контакты поддержки', callback_data='support_contacts')]
     ]
 )
 

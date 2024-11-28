@@ -4,9 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="e34ac076-2ed1-4318-80e1-46a0f0fd11eb" name="Changes" comment="Стартуем дипломный проект в Urban University (2024)">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="e34ac076-2ed1-4318-80e1-46a0f0fd11eb" name="Changes" comment="Добавлено меню Телеграм-бота и вывод геопозиции в веб-версии карт">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_classes.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_classes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database.py" beforeDir="false" afterPath="$PROJECT_DIR$/database.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/databases/users.db" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/helper.py" beforeDir="false" afterPath="$PROJECT_DIR$/helper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/img/wpw.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/keyboards.py" beforeDir="false" afterPath="$PROJECT_DIR$/keyboards.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,10 +30,10 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "customColor": "",
-  "associatedIndex": 4
-}]]></component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 4
+}</component>
   <component name="ProjectId" id="2pL6YOGM6HusDzMWp8nscB4WEeM" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
@@ -35,6 +42,12 @@
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
+    "Python.app.executor": "Run",
+    "Python.data_classes.executor": "Run",
+    "Python.dataclasses.executor": "Run",
+    "Python.logger.executor": "Run",
+    "Python.main.executor": "Run",
+    "Python.test.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master"
   }
@@ -63,11 +76,38 @@
       <option name="project" value="LOCAL" />
       <updated>1732533160157</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Попытка запросить координаты полевого специалиста (FieldUser)">
+      <option name="closed" value="true" />
+      <created>1732652968708</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1732652968708</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Добавлена проверка геопозиционирования">
+      <option name="closed" value="true" />
+      <created>1732717209090</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1732717209090</updated>
+    </task>
+    <task id="LOCAL-00004" summary="Добавлено меню Телеграм-бота и вывод геопозиции в веб-версии карт">
+      <option name="closed" value="true" />
+      <created>1732743425588</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1732743425588</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Стартуем дипломный проект в Urban University (2024)" />
-    <option name="LAST_COMMIT_MESSAGE" value="Стартуем дипломный проект в Urban University (2024)" />
+    <MESSAGE value="Попытка запросить координаты полевого специалиста (FieldUser)" />
+    <MESSAGE value="Добавлена проверка геопозиционирования" />
+    <MESSAGE value="Добавлено меню Телеграм-бота и вывод геопозиции в веб-версии карт" />
+    <option name="LAST_COMMIT_MESSAGE" value="Добавлено меню Телеграм-бота и вывод геопозиции в веб-версии карт" />
   </component>
 </project>

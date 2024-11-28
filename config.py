@@ -17,6 +17,7 @@ language_icon = 'img/Ru-Cn.png'
 @dataclass
 class AuthorInfo:
     author: str = 'Alexey A.Tsukanov'
+    author_phone: str = tsukanoff.phone_number  # номер телефона для поддержки
     author_email: str = 'a.a.tsukanov@yandex.ru'
     author_page: str = 'scholar.google.com/citations?hl=en&user=4LlptA8AAAAJ'
     author_site: str = 'https://tsukanov-lab.moy.su/index/tsukanov_lab/0-2'
