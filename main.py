@@ -163,9 +163,8 @@ async def start_work(message: Message):
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
+    db.user_started_work(message.from_id)
     await message.answer(text='Приступить к полевым работам', reply_markup=kb.work_menu_kb)
-
-
 
 
 @dp.message_handler(text='Информация')

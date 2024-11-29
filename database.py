@@ -6,6 +6,46 @@ from datatypes import user_changeable_columns
 
 
 
+def init_project_db():
+    """Создает две таблицы в project.db"""
+
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+
+    # создаем Таблицу "Points" точек проекта:
+    cursor.execute('''
+                    CREATE TABLE IF NOT EXISTS Points(
+                    PointID TEXT NOT NULL UNIQUE,
+                    ComplectID TEXT,
+                    datetime_start TEXT,
+                    datetime_end TEXT,
+                    N_WGS84_plan REAL NOT NULL,
+                    E_WGS84_plan REAL NOT NULL,
+                    N_WGS84_fact REAL,
+                    E_WGS84_fact REAL,
+                    H_WGS84 REAL,
+                    LON_UTM REAL,
+                    LAT_UTM REAL,
+                    Z_UTM REAL,
+                    Comments TEXT
+                    );''')
+
+    # создаем Таблицу "Devices" полевых комплектов приборов:
+    cursor.execute('''
+                        CREATE TABLE IF NOT EXISTS Devices(
+                        ComplectID TEXT NOT NULL UNIQUE,
+                        status TEXT,
+                        PointID TEXT,
+                        UserID INT,
+                        datetime_start TEXT
+                        );''')
+    # <ComplectID> is <busy> at <PointID> by <UserID> since <datetime_start>
+    connection.commit()
+    connection.close()
+
+
+
+
 def init_users_db():
     """Создает две таблицы в users.db"""
 
@@ -42,6 +82,29 @@ def init_users_db():
     connection.commit()
     connection.close()
 
+
+def fill_points(PointsID: list[str], N_WGS84: list[str], E_WGS84: list[str]) -> None:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    for pid, lat, lon in zip(PointsID, N_WGS84, E_WGS84):
+        cursor.execute(f'INSERT INTO Points (PointID, N_WGS84_plan, E_WGS84_plan) VALUES (?, ?, ?)',
+                       (pid, lat, lon))
+    connection.commit()
+    connection.close()
+
+
+def fill_complects(ComplectsID: list[str]) -> None:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    for cid in ComplectsID:
+        cursor.execute(f'INSERT INTO Devices (ComplectID, status) VALUES (?, ?)',
+                       (cid, 'свободен'))
+    connection.commit()
+    connection.close()
+
+
+'''Далее блок CRUD-функций для Users и Admins
+=============================================='''
 
 def add_admins():
     '''Впервые в db прописываются только id (telegram.id) admin-пользователей,
@@ -260,15 +323,34 @@ def user_started_work(user_id: int) -> bool:
     '''Делает отметку о том, что специалист начал полевую работу,
     возвращает False, если пользователь не активен и True в штатном случае.
     '''
-    pass
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    is_active = cursor.execute('SELECT is_active FROM Users WHERE id = ?', (user_id,)).fetchone()
+    if is_active[0] == 1:
+        cursor.execute(f'UPDATE Users SET is_working_now = ? WHERE id = ?', (1, user_id))
+        connection.commit()
+        connection.close()
+    else:
+        connection.close()
+        return False
 
 def user_completed_work(user_id: int) -> bool:
     '''Делает отметку о том, что специалист закончил полевую работу,
     возвращает False, если работа не была начата и True в штатном случае.
     '''
-    pass
+    connection = sqlite3.connect('databases/users.db')
+    cursor = connection.cursor()
+    is_working_now = cursor.execute('SELECT is_working_now FROM Users WHERE id = ?', (user_id,)).fetchone()
+    if is_working_now[0] == 1:
+        cursor.execute(f'UPDATE Users SET is_working_now = ? WHERE id = ?', (0, user_id))
+        connection.commit()
+        connection.close()
+    else:
+        connection.close()
+        return False
 
 
 # Принудительно производим инициализацию, чтобы сработала при импорте:
+init_project_db()
 init_users_db()
 add_admins()

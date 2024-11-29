@@ -174,14 +174,14 @@ class App(tk.Tk):
                     sub = '100+'
             else:
                 if len(cid) < 4:
-                    # еще как вариант: sub = f'{cid[:2]}0-{cid[:2]}9'
-                    sub = f'{cid[:2]}[0-9]'
+                    # еще как вариант: sub = f'{cid[:2]}[0-9]'
+                    sub = f'{cid[:2]}0-{cid[:2]}9'
                 else:
                     sub = f'{cid[0]}100+'
             self.task.df_of_complects.iloc[j, self.task.df_of_complects.columns.get_loc('SubGroups')] = sub
 
         # сохраняем в excel:
-        fname = f'subgroups-of-complects.{today}.xlsx'
+        fname = f'_temp_subgroups-of-complects.{today}.xlsx'
         Writer = pd.ExcelWriter(os.path.join(settings.tables_dir, fname))
         self.task.df_of_complects.to_excel(Writer, sheet_name='SubGroups', index=True)
         Writer._save()
