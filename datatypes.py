@@ -4,6 +4,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import os
+import json
 
 import settings
 
@@ -11,41 +12,42 @@ class Task:
 
     def __init__(self):
         self.ProjectName: str = ''
-        self.nPoint: int = 0  # количество проектных точек
+        self.nPoints: int = 0  # количество проектных точек
         self.fname_project_points: str = ''  # *.xlsx файл
         self.recommended_group_of_devices = set(settings.devices_groups)
         self.Point_ID = np.array([])
         self.N_WGS84 = np.array([])
         self.E_WGS84 = np.array([])
-        self.data_pd: pd.DataFrame = pd.DataFrame([])
         self.TextTaskDetails: str = ''
         self.date = datetime.date.today()
 
-    def load(self, fname: str, echo=True) -> bool:
+    def load(self, fname: str, echo=False) -> bool:
         if not os.path.isfile(fname):
             print(f'Task.load: файл {fname} не найден')
             return False
 
         try:
-            self.data_pd = pd.read_excel(fname)
+            data_pd = pd.read_excel(fname)
         except Exception as exc:
             print(f'Task.load: ошибка при чтении файла {fname} методом pd.read_excel\n{exc}')
             return False
         if echo:
-            print(f'Task.load: столбцы = {self.data_pd.columns}')
+            print(f'Task.load: столбцы = {data_pd.columns}')
 
         # пока нужны только столбцы 'Point_ID', 'N-WGS84', 'E-WGS84':
-        self.Point_ID = self.data_pd['Point_ID']
-        self.N_WGS84 = self.data_pd['N-WGS84']
-        self.E_WGS84 = self.data_pd['E-WGS84']
+        self.Point_ID = np.array(data_pd['Point_ID'])
+        self.N_WGS84 = np.array(data_pd['N-WGS84'])
+        self.E_WGS84 = np.array(data_pd['E-WGS84'])
 
         # если все удачно сохраним путь к исходной Таблице:
         self.fname_project_points = fname
+        self.nPoints = len(self.Point_ID)
+        print(f'Загружено {self.nPoints} проектных точек.')
         return True
 
     def reset(self):
         self.ProjectName: str = ''
-        self.nPoint: int = 0
+        self.nPoints: int = 0
         self.fname_project_points: str = ''
         self.recommended_group_of_devices = set(settings.devices_groups)
         self.Point_ID = np.array([])
@@ -54,6 +56,9 @@ class Task:
         self.data_pd: pd.DataFrame = pd.DataFrame([])
         self.TextTaskDetails: str = ''
         self.date = datetime.date.today()
+
+    def save_as_json(self, fname: str) -> None:
+        json.dumps()
 
 
 @dataclass

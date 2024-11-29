@@ -1,7 +1,9 @@
+import json
+
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-from my_earth import Earth
+from earth import Earth
 from settings import devices_GroupID_kb_layout, devices_groups
 
 start_kb = ReplyKeyboardMarkup(
@@ -51,7 +53,7 @@ user_profile_kb = InlineKeyboardMarkup(
     ]
 )
 
-
+# больше не нужна...
 user_update_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [
@@ -81,7 +83,9 @@ def make_map_kb(lat: float, lon: float) -> InlineKeyboardMarkup:
             [
                 InlineKeyboardButton(text='Google map', url=Earth.make_maps_google_url(lat, lon)),
                 InlineKeyboardButton(text='nakarte.me', url=Earth.make_maps_nakarte_url(lat, lon))
-            ]
+            ],
+            [InlineKeyboardButton(text='Зарегистрировать точку',
+                                  callback_data=json.dumps({'#': 'Setup', 'lat': lat, 'lon': lon}))]
         ]
     )
 

@@ -4,11 +4,13 @@ import tkinter.filedialog as tkfd
 import tkinter.simpledialog as tksd
 import os
 import threading
+import datetime
 
 # импортируем свои модули
 import config
 import settings
 from datatypes import Task
+from earth import StaticEarth
 
 def onewtreadecorator(func):
     '''Декорируем функции, которые хотим запустить в параллельном потоке'''
@@ -35,27 +37,39 @@ class App(tk.Tk):
         self.protocol('WM_DELETE_WINDOW', self.on_quit)
 
         # "Холст" для вывода изображения карты:
-        self.canvas = tk.Canvas(self, width=650, height=450,
-                                background=settings.canvas_bg)  # у статических Я.карт 650х450 максимальное разрешение
+        self.canvas = tk.Canvas(self, height=450, width=650)  # у статических Я.карт 650х450 максимальное разрешение
+        self.photo_image = tk.PhotoImage(file=settings.canvas_bg_img)
+        self.img_tag = self.canvas.create_image(0, 0, anchor='nw', image=self.photo_image)
         self.canvas.grid(row=0, column=0)
 
         # Основное управление в виде menu bar:
         self.MenuBar = tk.Menu(self)
         # Menu->File:
         self.menu_file = tk.Menu(self.MenuBar, tearoff=0)
-        self.menu_file.add_command(label=u'Открыть задание из *.xlsx', command=self.on_open_xlsx)
-        self.menu_file.add_command(label=u'Загрузить проект из *.kml', command=self.on_open_kml)
+        self.menu_file.add_command(label='Открыть задание из *.xlsx', command=self.on_open_xlsx)
+        self.menu_file.add_command(label='Загрузить проект из *.kml', state=tk.DISABLED, command=self.on_open_kml)
         self.menu_file.add_separator()
-        self.menu_file.add_command(label=u'Статистика проекта', command=self.on_project_stat)
-        self.menu_file.add_command(label=u'Сведения', command=self.on_about)
+        self.menu_file.add_command(label='Статистика проекта', command=self.on_project_stat)
+        self.menu_file.add_command(label='Сведения', command=self.on_about)
         self.menu_file.add_separator()
-        self.menu_file.add_command(label=u'Выход', command=self.on_quit)
-        self.MenuBar.add_cascade(label=u'Файл', menu=self.menu_file)
+        self.menu_file.add_command(label='Выход', command=self.on_quit)
+        self.MenuBar.add_cascade(label='Файл', menu=self.menu_file)
+
+        # Menu->Проект:
+        self.menu_project = tk.Menu(self.MenuBar, tearoff=0)
+        self.menu_project.add_command(label='Загрузить таблицу точек из *.xlsx', command=self.on_open_xlsx)
+        self.menu_project.add_command(label='Статистика проекта', command=self.on_project_stat)
+        self.menu_project.add_separator()
+        self.menu_project.add_command(label='Создать проектное задание', command=self.on_create_task)
+        self.menu_project.add_separator()
+        self.menu_project.add_command(label='Запустить Telegram-бота', command=self.on_run_telegram_bot)
+        self.MenuBar.add_cascade(label='Проект', menu=self.menu_project)
 
         # Menu->Telegram Bot:
         self.menu_tg_bot = tk.Menu(self.MenuBar, tearoff=0)
-        self.menu_tg_bot.add_command(label='Запустить Telegram-бота', command=self.on_run_telegram_bot)
         self.menu_tg_bot.add_command(label='Настройки бота', command=self.on_bot_settings)
+        self.menu_tg_bot.add_separator()
+        self.menu_tg_bot.add_command(label='Запустить Telegram-бота', command=self.on_run_telegram_bot)
         self.MenuBar.add_cascade(label='Telegram-бот', menu=self.menu_tg_bot)
 
         # Menu->Настройки:
@@ -85,18 +99,70 @@ class App(tk.Tk):
         self.config(menu=self.MenuBar)
 
 
-    def on_open_xlsx(self) -> bool:
+    def on_open_xlsx(self) -> None:
         fname = tkfd.askopenfilename(filetypes=[('Таблица Excel', '*.xlsx'), ('Все файлы', '*.*')])
         self.task.load(fname)
-        #self.
-        #my_earth
-        #self.show_map()
+        earth = StaticEarth()
+        # все метки -- обычные точки: 'Т':
+        points_status = ['Т' for _ in range(self.task.nPoints)]
+        earth.copy_points(longitude=self.task.E_WGS84,
+                          latitude=self.task.N_WGS84,
+                          status=points_status)
+        fname_map = earth.load_map()
+        if not fname_map == '':
+            self.show_image(fname_map)
 
     def on_open_kml(self):
         pass
 
+
+    def on_create_task(self) -> bool:
+        if self.task.nPoints < 1:
+            msg = 'Похоже, проект не загружен, либо не содержит плановых точек.\n'\
+                  'Пожалуйста, загрузите Таблицу точек проекта:\nМеню -> Файл -> Открыть задание из *.xlsx'
+            tkmb.showinfo(parent=self, title='Создание задания', message=msg)
+            return False
+        # Если точки загружены, заполняем поля self.task:
+        self.task.ProjectName = tksd.askstring(parent=self, title='Создание полевого задания',
+                                               prompt='Введите ',
+                                               initialvalue='')
+
+        ask_one_more = True
+        while ask_one_more:
+            recommended_group_of_devices = tksd.askstring(parent=self, title='Создание полевого задания',
+                                                          prompt='',
+                                                          initialvalue='')
+            self.task.recommended_group_of_devices = list(recommended_group_of_devices.split(' '))
+            ask_one_more = not self.check_devices_groups(self.task.recommended_group_of_devices)
+
+        self.task.date = datetime.date.today()
+
+        return True
+
+    def check_devices_groups(self, recommended_group_of_devices: list[str]) -> bool:
+        err_msg = ''
+        for group_id in recommended_group_of_devices:
+            if not group_id in settings.devices_groups:
+                err_msg += f'Group ID = {group_id} не определено\n'
+
+        if err_msg != '':
+            err_msg = 'Внимание: для поддерживаемых групп приборов\n' + err_msg
+            tkmb.showwarning(parent=self, title='Проверка поддерживаемых приборов Group ID', message=err_msg)
+            return False
+        return True
+
     def on_project_stat(self):
-        pass
+        stat = 'Статистика проекта\n\n\n'
+        stat += f'Загружено {self.task.nPoints} запланированных\nточек наблюдения.\n\n'
+        stat += f'Исходная таблица точек проекта:\n{self.task.fname_project_points}\n\n'
+        if self.task.nPoints > 0:
+            stat += f'Сегмент значений широт:\nот {min(self.task.N_WGS84)} до {max(self.task.N_WGS84)}\n\n'
+            stat += f'Диапазон значений долготы:\nот {min(self.task.E_WGS84)} до {max(self.task.E_WGS84)}\n\n'
+            stat += f'Наименование ID точек:\nпервая {self.task.Point_ID[0]}, последняя {self.task.Point_ID[-1]}'
+        else:
+            stat += 'Похоже, проект не загружен, либо не содержит плановых точек.\n'\
+                    'Пожалуйста, загрузите Таблицу точек проекта: Меню -> Файл -> Открыть задание из *.xlsx'
+        tkmb.showinfo(parent=self, title='Статистика проекта', message=stat)
 
     @onewtreadecorator
     def on_run_telegram_bot(self):
@@ -106,16 +172,17 @@ class App(tk.Tk):
         os.system(cmd_line)
 
     def on_app_settings(self):
-        pass
+        tkmb.showinfo(parent=self, title='Настройка основного приложения',
+                      message='Здесь будут добавлены настройки приложения,\nпока они производятся в файле setting.py.')
 
     def on_bot_settings(self):
-        pass
+        tkmb.showinfo(parent=self, title='Настройка Telegram-бота',
+                      message='Здесь будут добавлены настройки Telegram-бота,\nпока они производятся в файле setting.py.')
 
     def show_image(self, fname: str):
         # Выводит изображение из файла на "холст":
-        img = tk.PhotoImage(file=fname)
-        self.canvas.create_image(0, 0, anchor='nw', image=img)
-        self.canvas.grid(row=0, column=0)
+        self.photo_image = tk.PhotoImage(file=fname)
+        self.canvas.itemconfigure(self.img_tag, image=self.photo_image)
 
     def on_contacts(self):
         tkmb.showinfo(title='Контакты разработчика...',

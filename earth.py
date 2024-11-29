@@ -3,7 +3,7 @@ import os
 
 import settings
 
-class MyStaticMaps(object):
+class StaticEarth(object):
     # простая работа с растровыми картами:
     # https://yandex.ru/dev/staticapi/doc/ru/request/markers
     def __init__(self):
@@ -27,6 +27,7 @@ class MyStaticMaps(object):
         self.xPointsLon: list[float] = []
         self.yPointsLat: list[float] = []
         self.PointsStatus: list[str] = []  # 'Я' -- значок своего положения, 'Т' -- точка, 'П' -- точка с прибором
+        #self.styler = '&style=elements:geometry|stylers.hue:0d69f2~elements:label.icon|stylers.hue:0d69f2~elements:label.text.fill|stylers.color:083f91'
         self.MAX_N_POINTS: int = 99  # ограничение static карт
 
     def copy_points(self, longitude: list[float], latitude: list[float], status: list[str]):
@@ -85,6 +86,8 @@ class MyStaticMaps(object):
                 URL += f'{x:.6f},{y:.6f},{style}{color}{size}{content}' + '~'
             # теперь убираем лишнюю тильду в конце:
             URL = URL[:-1]
+            # добавляем стайлер из примера https://yandex.ru/dev/staticapi/doc/ru/request/customization:
+            # URL += self.styler  # видимо, в платной версии
 
         self.current_map_request = URL
         return self.current_map_request

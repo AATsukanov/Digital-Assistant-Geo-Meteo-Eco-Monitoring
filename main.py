@@ -306,6 +306,16 @@ async def show_users_stat(call: CallbackQuery):
     await call.message.answer(text=text, parse_mode='html')
     await call.answer()
 
+@dp.callback_query_handler(lambda callback_query: json.loads(callback_query.data)['#'] == 'Setup')
+async def point_coordinates(call: CallbackQuery):
+    callback_data = call.data
+    callback_data = json.loads(callback_data)
+    lat = callback_data['lat']
+    lon = callback_data['lon']
+    text = f'<b>callback_data</b> = {callback_data}'
+    await call.message.answer(text=text, parse_mode='html')
+    await call.answer()
+
 
 @dp.message_handler()
 async def all_messages(message: Message):
