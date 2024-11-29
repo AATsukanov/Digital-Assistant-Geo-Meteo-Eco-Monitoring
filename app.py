@@ -5,6 +5,7 @@ import tkinter.simpledialog as tksd
 import os
 import threading
 
+# импортируем свои модули
 import config
 import settings
 from datatypes import Task
@@ -25,13 +26,18 @@ class App(tk.Tk):
 
     def init_GUI(self):
         self.title(f'{config.app_title} {config.version}')
-        self.geometry(config.geometry)
+        self.geometry(settings.geometry)
         self.resizable(width=False, height=False)  # пока отключим возможность изменения размеров основного окна
         self.iconbitmap(config.iconbitmap)
         self.iconify = True
 
         # Перехват закрытия окна:
         self.protocol('WM_DELETE_WINDOW', self.on_quit)
+
+        # "Холст" для вывода изображения карты:
+        self.canvas = tk.Canvas(self, width=650, height=450,
+                                background=settings.canvas_bg)  # у статических Я.карт 650х450 максимальное разрешение
+        self.canvas.grid(row=0, column=0)
 
         # Основное управление в виде menu bar:
         self.MenuBar = tk.Menu(self)
@@ -78,11 +84,13 @@ class App(tk.Tk):
         # configure:
         self.config(menu=self.MenuBar)
 
+
     def on_open_xlsx(self) -> bool:
         fname = tkfd.askopenfilename(filetypes=[('Таблица Excel', '*.xlsx'), ('Все файлы', '*.*')])
         self.task.load(fname)
-        my_earth
-        self.show_map()
+        #self.
+        #my_earth
+        #self.show_map()
 
     def on_open_kml(self):
         pass
@@ -102,6 +110,12 @@ class App(tk.Tk):
 
     def on_bot_settings(self):
         pass
+
+    def show_image(self, fname: str):
+        # Выводит изображение из файла на "холст":
+        img = tk.PhotoImage(file=fname)
+        self.canvas.create_image(0, 0, anchor='nw', image=img)
+        self.canvas.grid(row=0, column=0)
 
     def on_contacts(self):
         tkmb.showinfo(title='Контакты разработчика...',

@@ -1,5 +1,9 @@
 import datetime
 
+# Настройки окна
+geometry = '654x474+0+0'
+canvas_bg = '#AAA5B5'
+
 # Имя *.json файла для передачи параметров при запуске Telegram-бота:
 fparams_json = f'params/exchange.{datetime.date.today()}.json'
 

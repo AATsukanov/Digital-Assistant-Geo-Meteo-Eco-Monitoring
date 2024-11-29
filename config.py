@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 version = '0.0.1'
 app_title = u'Цифровой Ассистент Системы Геомониторинга'
-geometry = '640x480+0+0'
 iconbitmap = 'icon.ico'
 
 welcome_img = 'img/wpwd.png'

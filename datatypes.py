@@ -23,21 +23,23 @@ class Task:
 
     def load(self, fname: str, echo=True) -> bool:
         if not os.path.isfile(fname):
-            if echo:
-                print(f'Task.load: файл {fname} не найден')
+            print(f'Task.load: файл {fname} не найден')
             return False
+
         try:
             self.data_pd = pd.read_excel(fname)
         except Exception as exc:
-            if echo:
-                print(f'Task.load: ошибка при чтении файла {fname} методом pd.read_excel\n{exc}')
+            print(f'Task.load: ошибка при чтении файла {fname} методом pd.read_excel\n{exc}')
             return False
         if echo:
             print(f'Task.load: столбцы = {self.data_pd.columns}')
 
+        # пока нужны только столбцы 'Point_ID', 'N-WGS84', 'E-WGS84':
+        self.Point_ID = self.data_pd['Point_ID']
+        self.N_WGS84 = self.data_pd['N-WGS84']
+        self.E_WGS84 = self.data_pd['E-WGS84']
 
-
-        # если все удачно:
+        # если все удачно сохраним путь к исходной Таблице:
         self.fname_project_points = fname
         return True
 

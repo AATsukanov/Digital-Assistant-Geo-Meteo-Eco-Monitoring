@@ -5,6 +5,7 @@ import settings
 
 class MyStaticMaps(object):
     # простая работа с растровыми картами:
+    # https://yandex.ru/dev/staticapi/doc/ru/request/markers
     def __init__(self):
         # создаем папку для временных png-файлов:
         if not os.path.isdir(settings.temp_maps_folder):
@@ -13,77 +14,100 @@ class MyStaticMaps(object):
         # Параметры со значениями по-умолчанию:
         self.fname: str = ''
         self.mode: str = 'AUTO'  # возможны 'SPAN', 'AUTO', 'ZOOM'
-        self.lon: float = 39.740277
-        self.lat: float = 43.568913  # Координаты центра карты на старте (Сочи, например!)
+        self.cLon: float = 42.442
+        self.cLat: float = 43.355  # Координаты центра карты на старте (Эльбрус, например)
         self.zoom: int = 14  # Масштаб карты на старте. Изменяется от 1 до 17
         self.type = 'map'  # &l=map&, другие значения 'map', 'sat', 'sat,skl'
-        self.spn_x = 2.5
-        self.spn_y = 2.5
+        self.spn_x = 2.5  # в градусах для режима SPAN
+        self.spn_y = 2.5  # размер поля
         self.size_x = 650  # max 650x450
         self.size_y = 450
         self.lang = 'ru_RU'  # 'en_RU'
         self.current_map_request = ''
         self.xPointsLon: list[float] = []
         self.yPointsLat: list[float] = []
-        # {долгота},{широта},{стиль}{цвет}{размер}{контент}
-        self.style = 'vk'  # pm, pm2, flag, vk
-        self.color_all = 'bk'
-        self.color_1st = 'gr'
-        self.size: str = 'm'
-        self.content: str = ''
+        self.PointsStatus: list[str] = []  # 'Я' -- значок своего положения, 'Т' -- точка, 'П' -- точка с прибором
         self.MAX_N_POINTS: int = 99  # ограничение static карт
 
-    def copy_points(self, LON, LAT):
-        self.xPointsLon = LON.copy()
-        self.yPointsLat = LAT.copy()
+    def copy_points(self, longitude: list[float], latitude: list[float], status: list[str]):
+        self.xPointsLon = longitude.copy()
+        self.yPointsLat = latitude.copy()
+        self.PointsStatus = status.copy()
 
-    def make_request(self):
-        if len(self.xPointsLon) * len(self.yPointsLat) == 0:
-        if self.mode == 'AUTO':
-
-                print(u'ОШИБКА: Режим AUTO доступен только в случае наличия точек-меток!')
-                self.current_map_request = ''
-                return ''
+    def _make_request(self):
+        nPoints = len(self.xPointsLon)
+        if nPoints > 0:
+            # Режим AUTO доступен только в случае наличия точек-меток
+            self.mode = 'AUTO'
+        else:
+            self.mode = 'SPAN'
+        # собираем запрос (см. https://yandex.ru/dev/staticapi/doc/ru/):
         URL = 'https://static-maps.yandex.ru/1.x/?'
         URL += f'l={self.type}&'
         URL += f'size={self.size_x},{self.size_y}&'
         if self.mode != 'AUTO':
-            URL += f'll={self.lon},{self.lat}&'
+            URL += f'll={self.cLon},{self.cLat}&'
         if self.mode == 'SPAN':
             URL += f'spn={self.spn_x},{self.spn_y}&'
         if self.mode == 'ZOOM':
             URL += f'z={self.zoom}&'
         if self.lang != 'ru_RU':
             URL += f'lang={self.lang}&'
-        if len(self.xPointsLon) * len(self.yPointsLat) > 0:
+
+        if nPoints > 0:
             URL += 'pt='
-            for j in range(1, len(self.xPointsLon)):
+            for j in range(nPoints):
                 if j >= self.MAX_N_POINTS:
-                    print(u'ВНИМАНИЕ/ВАЖНО: Превышено максимальное количество точек-меток 99.')
+                    print(u'ВНИМАНИЕ: Превышено максимальное количество точек-меток 99.')
                     break
                 x = self.xPointsLon[j]
                 y = self.yPointsLat[j]
-                color = self.color_all
-                URL += f'{x:.6f},{y:.6f},{self.style}{color}{self.size}{self.content}' + '~'
-            # первую точку поверх всех:
-            x = self.xPointsLon[0]
-            y = self.yPointsLat[0]
-            color = self.color_1st
-            URL += f'{x},{y},{self.style}{color}{self.size}{self.content}'
+                if self.PointsStatus[j] == 'Я':
+                    style = 'ya_ru'
+                    color = ''
+                    size = ''
+                    content = ''
+                elif self.PointsStatus[j] == 'Т':
+                    style = 'vk'
+                    color = 'bk'
+                    size = 'm'
+                    content = ''
+                elif self.PointsStatus[j] == 'П':
+                    style = 'vk'
+                    color = 'gr'
+                    size = 'm'
+                    content = ''
+                else:
+                    style = 'round'
+                    color = ''
+                    size = ''
+                    content = ''
+                URL += f'{x:.6f},{y:.6f},{style}{color}{size}{content}' + '~'
+            # теперь убираем лишнюю тильду в конце:
+            URL = URL[:-1]
+
         self.current_map_request = URL
         return self.current_map_request
 
-    def make_fname(self):
-        fname = f'_temp_yandex_{self.mode}_{self.lon}_{self.lat}'
-        fname += f'_{self.spn_x}_{self.spn_y}_{self.zoom}_n{len(self.xPointsLon)}.png'
-        return fname
+    def _make_fname(self):
+        fname = f'_temp_yandex_{self.mode}_'
+        if self.mode != 'AUTO':
+            fname += f'{self.cLon}-{self.cLat}_'
+        if self.mode == 'SPAN':
+            fname += f'spn={self.spn_x}-{self.spn_y}_'
+        if self.mode == 'ZOOM':
+            fname += f'{self.zoom}_'
+        fname += f'n={len(self.xPointsLon)}.png'
+        return os.path.join(self.workdir, fname)
 
     def load_map(self) -> str:
+        '''При успешном завершении запроса функция возвращает str
+        имя временного png-файла со статической картой.
+        '''
         # создаем строку запроса:
-        self.make_request()
+        self._make_request()  # результат записывается в переменную self.current_map_request
         if self.current_map_request == '':
             return ''
-        # (результат записывается в переменную self.current_map_request)
         response = rq.get(self.current_map_request)
         if not response:
             print(u'ОШИБКА: Ошибка выполнения запроса:')
@@ -92,7 +116,7 @@ class MyStaticMaps(object):
             print(f'Содержание отклика: {response.content})')
             return ''
         # Запись полученного изображения в файл:
-        self.fname = self.workdir + '/' + self.make_fname()
+        self.fname = self._make_fname()
         try:
             with open(self.fname, "wb") as file:
                 file.write(response.content)
@@ -115,11 +139,11 @@ class Earth:
         return url
 
     @staticmethod
-    def make_maps_google_url(lat: float, lon: float, zoom: int = 12) -> str:
+    def make_maps_google_url(lat: float, lon: float, zoom: int = 14) -> str:
         url = f'https://www.google.com/maps/@{lat},{lon},{zoom}z'
         return url
 
     @staticmethod
-    def make_maps_nakarte_url(lat: float, lon: float, zoom: int = 12) -> str:
+    def make_maps_nakarte_url(lat: float, lon: float, zoom: int = 14) -> str:
         url = f'https://nakarte.me/#m={zoom}/{lat}/{lon}&l=O'
         return url
