@@ -6,6 +6,8 @@ import os
 import threading
 import datetime
 
+import pandas as pd
+
 # импортируем свои модули
 import config
 import settings
@@ -24,6 +26,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()  # запуск инициализации родительского класса
         self.task = Task()  # объект задания
+        self.fname_map_image: str = ''  # растровая карта
         self.init_GUI()
 
     def init_GUI(self):
@@ -111,32 +114,87 @@ class App(tk.Tk):
         fname_map = earth.load_map()
         if not fname_map == '':
             self.show_image(fname_map)
+            self.fname_map_image =fname_map
 
     def on_open_kml(self):
         pass
 
 
-    def on_create_task(self) -> bool:
+    def on_create_task(self, echo=True) -> bool:
         if self.task.nPoints < 1:
             msg = 'Похоже, проект не загружен, либо не содержит плановых точек.\n'\
                   'Пожалуйста, загрузите Таблицу точек проекта:\nМеню -> Файл -> Открыть задание из *.xlsx'
             tkmb.showinfo(parent=self, title='Создание задания', message=msg)
             return False
+        today = datetime.date.today()
         # Если точки загружены, заполняем поля self.task:
+        # Название проекта:
         self.task.ProjectName = tksd.askstring(parent=self, title='Создание полевого задания',
-                                               prompt='Введите ',
-                                               initialvalue='')
-
+                                               prompt='Пожалуйста, заполните название проекта или задания:',
+                                               initialvalue=f'Проект геомониторинга {today.month}/{today.year}')
+        # Group ID приборов:
         ask_one_more = True
         while ask_one_more:
             recommended_group_of_devices = tksd.askstring(parent=self, title='Создание полевого задания',
-                                                          prompt='',
-                                                          initialvalue='')
+                                                          prompt='Введите через пробел GroupID рекомендуемых приборов:',
+                                                          initialvalue=' '.join(settings.devices_groups)).upper()
             self.task.recommended_group_of_devices = list(recommended_group_of_devices.split(' '))
             ask_one_more = not self.check_devices_groups(self.task.recommended_group_of_devices)
+        if echo:
+            print(f'recommended_group_of_devices = {self.task.recommended_group_of_devices}')
 
+        # Растровая карта:
+        self.task.map_image = self.fname_map_image
+
+        # Complect ID комплекты приборов:
+        #  - сначала загружаем таблицу со всеми комплектами приборов:
+        tkmb.showinfo(parent=self, title='Создание задания',
+                      message='Выберете файл с Таблицей комплектов приборов (ComplectID) и загрузите его.')
+        fname = tkfd.askopenfilename(filetypes=[('Таблица комплектов приборов', '*.xlsx'), ('Все файлы', '*.*')])
+        self.task.load_table_of_complects(fname)
+
+        #  - сравниваем и оставляем только те, которые из списка рекомендованных recommended_group_of_devices:
+        df = self.task.df_of_complects.copy()
+        df['new_mark'] = ['нет' for _ in range(len(df['GroupID']))]
+        for j, gid in enumerate(self.task.df_of_complects['GroupID']):
+            if gid in self.task.recommended_group_of_devices:
+                df.iloc[j, df.columns.get_loc('new_mark')] = 'да'
+
+        self.task.df_of_complects = df[df['new_mark'] == 'да']
+        # убираем временный столбец и создаем подгруппы:
+        self.task.df_of_complects = self.task.df_of_complects[['ComplectID', 'GroupID']]
+        self.task.df_of_complects['SubGroups'] = self.task.df_of_complects['GroupID']
+        for j, cid in enumerate(self.task.df_of_complects['ComplectID']):
+            if str(cid).isdigit():
+                if len(cid) < 2:
+                    sub = '1-9'
+                elif len(cid) < 3:
+                    sub = f'{cid[0]}0-{cid[0]}9'
+                else:
+                    sub = '100+'
+            else:
+                if len(cid) < 4:
+                    # еще как вариант: sub = f'{cid[:2]}0-{cid[:2]}9'
+                    sub = f'{cid[:2]}[0-9]'
+                else:
+                    sub = f'{cid[0]}100+'
+            self.task.df_of_complects.iloc[j, self.task.df_of_complects.columns.get_loc('SubGroups')] = sub
+
+        # сохраняем в excel:
+        fname = f'subgroups-of-complects.{today}.xlsx'
+        Writer = pd.ExcelWriter(os.path.join(settings.tables_dir, fname))
+        self.task.df_of_complects.to_excel(Writer, sheet_name='SubGroups', index=True)
+        Writer._save()
+
+        # Описание, комментарии к проведению полевых работ в свободной форме:
+        self.task.TaskDetails = tksd.askstring(parent=self, title='Создание полевого задания',
+                                               prompt='Описание, важные замечания к заданию, детали проекта, '
+                                                      'особенности проведения полевых работ можно указать здесь '
+                                                      '(в свободной форме) для полевых специалистов:',
+                                               initialvalue='')
+
+        # Дата формирования задания:
         self.task.date = datetime.date.today()
-
         return True
 
     def check_devices_groups(self, recommended_group_of_devices: list[str]) -> bool:

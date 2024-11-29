@@ -92,6 +92,7 @@ class StaticEarth(object):
         self.current_map_request = URL
         return self.current_map_request
 
+
     def _make_fname(self):
         fname = f'_temp_yandex_{self.mode}_'
         if self.mode != 'AUTO':
@@ -100,8 +101,15 @@ class StaticEarth(object):
             fname += f'spn={self.spn_x}-{self.spn_y}_'
         if self.mode == 'ZOOM':
             fname += f'{self.zoom}_'
-        fname += f'n={len(self.xPointsLon)}.png'
-        return os.path.join(self.workdir, fname)
+        fname += f'n={len(self.xPointsLon)}'
+
+        fname = os.path.join(self.workdir, fname)
+        if os.path.isfile(fname + '.png'):
+            j = 1
+            while os.path.isfile(fname + f'.{j}.png'):
+                j += 1
+        return fname + f'.{j}.png'
+
 
     def load_map(self) -> str:
         '''При успешном завершении запроса функция возвращает str

@@ -11,21 +11,22 @@ import settings
 class Task:
 
     def __init__(self):
-        self.ProjectName: str = ''
+        self.ProjectName: str = '(не указано)'
         self.nPoints: int = 0  # количество проектных точек
         self.fname_project_points: str = ''  # *.xlsx файл
         self.recommended_group_of_devices = set(settings.devices_groups)
         self.Point_ID = np.array([])
         self.N_WGS84 = np.array([])
         self.E_WGS84 = np.array([])
-        self.TextTaskDetails: str = ''
+        self.map_image: str = ''
+        self.df_of_complects = pd.DataFrame([])
+        self.TaskDetails: str = ''
         self.date = datetime.date.today()
 
     def load(self, fname: str, echo=False) -> bool:
         if not os.path.isfile(fname):
             print(f'Task.load: файл {fname} не найден')
             return False
-
         try:
             data_pd = pd.read_excel(fname)
         except Exception as exc:
@@ -45,19 +46,51 @@ class Task:
         print(f'Загружено {self.nPoints} проектных точек.')
         return True
 
+    def load_table_of_complects(self, fname: str, echo=False) -> bool:
+        if not os.path.isfile(fname):
+            print(f'Task.load_table_of_complects: файл {fname} не найден')
+            return False
+        try:
+            data_pd = pd.read_excel(fname)
+        except Exception as exc:
+            print(f'Task.load_table_of_complects: ошибка при чтении файла {fname} методом pd.read_excel\n{exc}')
+            return False
+        if echo:
+            print(f'Task.load_table_of_complects: столбцы = {data_pd.columns}')
+
+        # нужны столбцы 'ComplectID', 'date_of_completion', 'GroupID':
+        data_pd.sort_values(by=['date_of_completion', 'ComplectID'], inplace=True)
+        data_pd = data_pd[['ComplectID', 'GroupID']]
+
+        self.df_of_complects = data_pd.drop_duplicates(subset='ComplectID', keep='last', inplace=False)
+
+        print(f'Загружено {len(self.df_of_complects["ComplectID"])} комплектов приборов.')
+        return True
+
     def reset(self):
-        self.ProjectName: str = ''
+        self.ProjectName: str = '(не указано)'
         self.nPoints: int = 0
         self.fname_project_points: str = ''
         self.recommended_group_of_devices = set(settings.devices_groups)
         self.Point_ID = np.array([])
         self.N_WGS84 = np.array([])
         self.E_WGS84 = np.array([])
-        self.data_pd: pd.DataFrame = pd.DataFrame([])
-        self.TextTaskDetails: str = ''
+        self.map_image: str = ''
+        self.df_of_complects = pd.DataFrame([])
+        self.TaskDetails: str = ''
         self.date = datetime.date.today()
 
     def save_as_json(self, fname: str) -> None:
+        # аккуратно собираем словарь:
+        obj = {}
+        obj['ProjectName'] = self.ProjectName
+        obj['nPoints'] = self.nPoints
+        obj['recommended_group_of_devices'] = self.recommended_group_of_devices
+        db
+        obj['Point_ID'] = list(self.Point_ID)
+        obj['N-WGS84'] = list(self.N_WGS84)
+        obj['N-WGS84'] = list(self.N_WGS84)
+
         json.dumps()
 
 

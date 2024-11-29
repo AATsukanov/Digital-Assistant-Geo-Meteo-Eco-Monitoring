@@ -14,7 +14,7 @@ temp_maps_folder = 'temp_maps/'
 # Путь к Таблицам по-умолчанию:
 tables_dir = 'tables/'
 table_devices_info = 'tables/DevicesInfo.xlsx'
-table_of_complects = 'tables/ComplectsTable.xlsx'
+table_of_complects = 'tables/TableOfComplects.xlsx'
 
 # Язык по-умолчанию:
 default_language = 'Ru'
