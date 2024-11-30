@@ -28,7 +28,8 @@ class App(tk.Tk):
         super().__init__()  # запуск инициализации родительского класса
         self.task = Task()  # объект задания
         self.fname_map_image: str = ''  # растровая карта
-        self.exchange_data_json: str = ''  # файл для обмена параметрами с telegram-ботом
+        # файл для обмена параметрами с telegram-ботом
+        self.exchange_data_json: str = settings.fparams_json.replace("$REPLACE=TODAY$", str(datetime.date.today()))
         self.init_GUI()
 
     def init_GUI(self):
@@ -225,13 +226,13 @@ class App(tk.Tk):
                                                prompt='Описание, важные замечания к заданию, детали проекта, '
                                                       'особенности проведения полевых работ можно указать здесь '
                                                       '(в свободной форме) для полевых специалистов:',
-                                               initialvalue='')
+                                               initialvalue='Дипломный проект для Urban University (А.Цуканов, 2024)')
 
         # Дата формирования задания (тип str):
         self.task.date = str(datetime.date.today())
 
         # Упаковываем в json:
-        self.exchange_data_json = settings.fparams_json.replace("$REPLACE=TODAY$", datetime.date.today())  # обновляем дату
+        self.exchange_data_json = settings.fparams_json.replace("$REPLACE=TODAY$", self.task.date)  # обновляем дату
         self.task.save_as_json(fname=self.exchange_data_json)
         return True
 

@@ -9,6 +9,13 @@ fparams_json = f'params/exchange.$REPLACE=TODAY$.json'
 # Путь сохранения временных статических карт:
 temp_maps_folder = 'temp_maps/'
 
+# zoom в веб-картах по-умолчанию:
+maps_zoom = {'yandex-static': 14,
+             'yandex': 15,
+             'google': 15,
+             'osm': 18,
+             'nakarte': 17}
+
 # Путь к Таблицам по-умолчанию:
 tables_dir = 'tables/'
 table_devices_info = 'tables/DevicesInfo.xlsx'
@@ -39,6 +46,10 @@ devices_GroupID_kb_layout = {
 
 # Поддерживаемые группы приборов (тип list[str]):
 devices_groups = ['A', 'B', 'G', 'M', 'P', 'R', 'V', 'W', '1-99']
+
+# Настройки размера выводимых списков точек и приборов в telegram-боте:
+bot_max_show_complects: int = 32
+bot_max_show_points: int = 20
 
 # Файл с изображением прибора определенной группы:
 def device_image(device_group: str) -> str:

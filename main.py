@@ -25,6 +25,7 @@ bot = Bot(token=config.token)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 input_data: dict = {}  # параметры задания и другие входные данные (json) от основного приложения (app)
+reg_loc_button: dict = {'visible': False, 'label': ''}  # динамические настройки кнопки регистрации геолокации точки
 
 class UserStates(StatesGroup):
     update_user_param = State()
@@ -41,8 +42,11 @@ class AdminStates(StatesGroup):
 
 async def on_startup(dispatcher: Dispatcher) -> None:
     await bot.set_my_commands([
-        types.BotCommand('start', 'Запуск'),
-        types.BotCommand('help',  'Помощь')
+        types.BotCommand('start', 'ЗАПУСК'),
+        types.BotCommand('menu', 'Главное меню'),
+        types.BotCommand('rm', 'Очистить клавиатуру'),
+        types.BotCommand('help',  'Помощь'),
+        types.BotCommand('end', 'Завершить')
     ])
 
 @dp.message_handler(commands=['start'])
@@ -59,27 +63,35 @@ async def start(message: Message):
             greeting_name = user.first_name + ' ' + user.last_name
     else:
         greeting_name = db.get_greeting_name(user_id=message.from_id)
+    global reg_loc_button
+    reg_loc_button['visible'] = False  # для start_kb reg_loc_button - invisible
     with open(config.welcome_img, 'rb') as img:
         await message.answer_photo(photo=img, caption=f'Здравствуйте, {greeting_name}', reply_markup=kb.start_kb)
 
-
-@dp.message_handler(text='< на главное меню')
+@dp.message_handler(commands=['menu'])
+@dp.message_handler(text=['< в главное меню'])
 async def back_start_menu(message: Message):
-    await message.answer('Главное меню:', reply_markup=kb.start_kb)
+    global reg_loc_button
+    # для start_kb reg_loc_button - invisible:
+    reg_loc_button['visible'] = False
+    await message.answer('Клавиатура начального меню:', reply_markup=kb.start_kb)
 
 
 @dp.callback_query_handler(text='back_user_profile')
 async def back_user_profile(call: CallbackQuery):
-    await call.message.answer('Меню:', reply_markup=kb.user_profile_kb)
+    await call.message.answer('Меню пользователя:', reply_markup=kb.user_profile_kb)
     await call.answer()
 
 
-#@dp.message_handler(text=['Проверить своё позиционирование'])
 @dp.message_handler(content_types=['location'])
 async def check_location(message: Message):
-    lat, lon = message.location["latitude"], message.location["longitude"]
+    global reg_loc_button
+    if db.user_started_work(message.from_id) == 0:
+        reg_loc_button['visible'] = False
+    lat, lon = message.location['latitude'], message.location['longitude']
     logger.info(f'{message.date} Проверка геопозиции @{message.from_user.username} ({message.from_id}): {lat}, {lon}')
-    await message.answer(text=f'Ваши координаты (LAT, LON): {lat}, {lon}', reply_markup=kb.make_map_kb(lat, lon))
+    await message.answer(text=f'Ваши координаты (LAT, LON): {lat}, {lon}',
+                         reply_markup=kb.make_map_kb(lat, lon, reg_loc_button))
 
 
 @dp.message_handler(text='Свой профиль')
@@ -161,18 +173,19 @@ async def support_contacts(call: CallbackQuery):
 @dp.message_handler(text='Открыть задание')
 async def open_task(message: Message):
     global input_data
+    global reg_loc_button  # для start_kb reg_loc_button - invisible:
+    reg_loc_button['visible'] = False
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
-    if input_data == '':
+    if input_data == {}:
         await message.answer(text='Текущие задания отсутствуют', reply_markup=kb.start_kb)
     # направляем схему точек и меню
-    with open('temp_maps/_temp_yandex_AUTO_n=10.png', 'rb') as map_img:
-        await message.answer_photo(photo=map_img,
-                                   caption='<b>название проекта</b>\nописание...',
+    with open(input_data['map_image'], 'rb') as map_image:
+        await message.answer_photo(photo=map_image,
+                                   caption=f'<b>{input_data["ProjectName"]}</b>\n{input_data["TaskDetails"]}',
                                    parse_mode='html',
                                    reply_markup=kb.start_kb)
-
 
 @dp.message_handler(text='Начать работу >')
 async def start_work(message: Message):
@@ -180,15 +193,61 @@ async def start_work(message: Message):
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
     db.user_started_work(message.from_id)
+    global reg_loc_button
+    reg_loc_button['visible'] = True
+    reg_loc_button['label'] = 'Зарегистрировать точку'
     await message.answer(text='Приступить к полевым работам', reply_markup=kb.work_menu_kb)
 
 
-@dp.message_handler(text='Информация')
+@dp.message_handler(text='Начать работу >')
+async def start_work(message: Message):
+    if db.user_is_active(message.from_id) == 0:
+        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
+        return
+
+
+@dp.message_handler(text='База данных')
 async def info(message: Message):
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
     await message.answer(text='Техническая информация', reply_markup=kb.field_info_kb)
+
+
+@dp.callback_query_handler(text='project_points_rest')
+async def project_points_rest(call: CallbackQuery):
+    text = db.get_points_rest()
+    if text == '':
+        text = 'в текущем задании не осталось точек для постановки'
+    await call.message.answer(text=f'<b>Оставшиеся точки для постановки:</b>\n\n{text}',
+                              parse_mode='html', reply_markup=kb.field_info_kb)
+    await call.answer()
+
+
+@dp.callback_query_handler(text='project_points_started')
+async def project_points_started(call: CallbackQuery):
+    text = db.get_points_started()
+    if text == '':
+        text = 'нет точек с установленным оборудованием'
+    await call.message.answer(text=f'<b>Оставшиеся точки для постановки:</b>\n\n{text}',
+                              parse_mode='html', reply_markup=kb.field_info_kb)
+    await call.answer()
+
+
+@dp.callback_query_handler(text='project_devices_free')
+async def project_devices_free(call: CallbackQuery):
+    text = db.get_free_complects()
+    await call.message.answer(text=f'<b>Свободные комплекты:</b>\n\n{text}',
+                              parse_mode='html', reply_markup=kb.field_info_kb)
+    await call.answer()
+
+
+@dp.callback_query_handler(text='project_devices_busy')
+async def project_devices_busy(call: CallbackQuery):
+    text = db.get_busy_complects()
+    await call.message.answer(text=f'<b>Установленные комплекты:</b>\n\n{text}',
+                              parse_mode='html', reply_markup=kb.field_info_kb)
+    await call.answer()
 
 
 @dp.callback_query_handler(text='users_in_the_field')
@@ -203,6 +262,8 @@ async def users_in_the_field(call: CallbackQuery):
 
 @dp.message_handler(commands=['end'])
 async def end(message: Message):
+    global reg_loc_button
+    reg_loc_button['visible'] = False
     info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} '\
            f'(@{message.from_user.username}, {message.from_id}) нажал "/end"'
     logger.info(info)
@@ -211,6 +272,13 @@ async def end(message: Message):
     else:
         msg = 'Невозможно завершить, работа не начата.'
     await message.answer(text=msg, reply_markup=types.ReplyKeyboardRemove())
+
+
+@dp.message_handler(commands=['rm'])
+async def rm_command(message: types.Message):
+    global reg_loc_button
+    reg_loc_button['visible'] = False
+    await message.reply(r'очистить клавиатуру /rm', reply_markup=types.ReplyKeyboardRemove())
 
 
 @dp.message_handler(commands=['admin'])
@@ -226,6 +294,8 @@ async def back_admin_panel(call: CallbackQuery):
     if call.from_user.id in config.admins:
         await call.message.answer('Панель управления', reply_markup=kb.admin_kb)
     else:
+        global reg_loc_button
+        reg_loc_button['visible'] = False
         await call.message.answer('Главное меню', reply_markup=kb.start_kb)
     await call.answer()
 
@@ -311,12 +381,12 @@ async def deactivation(message: Message, state: State) -> None:
 @dp.callback_query_handler(text='users_stat')
 async def show_users_stat(call: CallbackQuery):
     n_users, n_admins, n_users_in_work, n_active_users = db.users_stat()
-    text = '<b>Полевые специалисты</b>\n'
+    text = '<b>ПОЛЕВЫЕ СПЕЦИАЛИСТЫ</b>\n'
     text += f' - всего: {n_users}\n'
     text += f' - в работе: {n_users_in_work}\n'
     text += f' - активированных: {n_active_users}\n'
     text += f' - деактивированных: {n_users - n_active_users}\n\n'
-    text += '<b>Координаторы</b>\n'
+    text += '<b>КООРДИНАТОРЫ</b>\n'
     text += f' - всего: {n_admins}'
     await call.message.answer(text=text, parse_mode='html')
     await call.answer()
@@ -334,29 +404,26 @@ async def point_coordinates(call: CallbackQuery):
 
 @dp.message_handler()
 async def all_messages(message: Message):
-    await message.answer('Команда не распознана, для начала, пожалуйста, нажмите на /start')
+    await message.answer('Команда не распознана, для начала, пожалуйста, нажмите на /start или /menu')
 
 
-def main(skip_updates: bool = True, echo: bool = True) -> None:
+def main(skip_updates: bool = True, echo: bool = False) -> None:
     global input_data
 
     # Расположение задания и других json-данных от приложения (app)
     # передается вторым (т.е. [1]) аргументом в команде запуска бота:
-    if len(sys.argv) > 1:
-        input_data = sys.argv[1]
-        print(f'bot-main: параметры входного задания получены в {input_data}')
-    else:
-        input_data = ''
-
     if echo:
         for j, param in enumerate(sys.argv):
             print(f'аргументы: sys.argv[j] = {param}')
         print('Количество аргументов:', len(sys.argv))
 
-    # декодирование из json:
-    input_data = json.load(input_data)
-    if echo:
-        print('Распаковка json:\n', input_data)
+    # читаем и декодируем из json, если файл передан:
+    if len(sys.argv) > 1:
+        with open(sys.argv[1], 'r') as file:
+            input_data = json.load(file)
+        if echo:
+            print('Распаковка json:\n', input_data)
+        print(f'bot-main: параметры входного задания получены в {sys.argv[1]}')
 
     # Запуск основного цикла telegram-бота:
     executor.start_polling(dp, skip_updates=skip_updates, on_startup=on_startup)

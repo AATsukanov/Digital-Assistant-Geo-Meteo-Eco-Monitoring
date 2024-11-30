@@ -16,7 +16,7 @@ class StaticEarth(object):
         self.mode: str = 'AUTO'  # возможны 'SPAN', 'AUTO', 'ZOOM'
         self.cLon: float = 42.442
         self.cLat: float = 43.355  # Координаты центра карты на старте (Эльбрус, например)
-        self.zoom: int = 14  # Масштаб карты на старте. Изменяется от 1 до 17
+        self.zoom: int = settings.maps_zoom['yandex-static']  # Масштаб карты на старте. Изменяется от 1 до 17
         self.type = 'map'  # &l=map&, другие значения 'map', 'sat', 'sat,skl'
         self.spn_x = 2.5  # в градусах для режима SPAN
         self.spn_y = 2.5  # размер поля
@@ -108,7 +108,8 @@ class StaticEarth(object):
             j = 1
             while os.path.isfile(fname + f'.{j}.png'):
                 j += 1
-        return fname + f'.{j}.png'
+            return fname + f'.{j}.png'
+        return fname + '.png'
 
 
     def load_map(self) -> str:
@@ -140,21 +141,21 @@ class StaticEarth(object):
 class Earth:
 
     @staticmethod
-    def make_maps_yandex_url(lat: float, lon: float, zoom: int=14) -> str:
+    def make_maps_yandex_url(lat: float, lon: float, zoom: int=15) -> str:
         url = f'https://yandex.ru/maps/?ll={lon}%2C{lat}&z={zoom}'
         return url
 
     @staticmethod
-    def make_openstreetmap_url(lat: float, lon: float, zoom: int=14) -> str:
+    def make_openstreetmap_url(lat: float, lon: float, zoom: int=18) -> str:
         url = f'https://www.openstreetmap.org/#map={zoom}/{lat}/{lon}'
         return url
 
     @staticmethod
-    def make_maps_google_url(lat: float, lon: float, zoom: int = 14) -> str:
+    def make_maps_google_url(lat: float, lon: float, zoom: int=15) -> str:
         url = f'https://www.google.com/maps/@{lat},{lon},{zoom}z'
         return url
 
     @staticmethod
-    def make_maps_nakarte_url(lat: float, lon: float, zoom: int = 14) -> str:
+    def make_maps_nakarte_url(lat: float, lon: float, zoom: int=17) -> str:
         url = f'https://nakarte.me/#m={zoom}/{lat}/{lon}&l=O'
         return url

@@ -142,7 +142,7 @@ class Task:
 class User:
     id: int
     is_working_now: int = 0  # 0 - не в поле, 1 - в поле (или потом 10 -- начал работу, 100 -- завершил работу)
-    is_active: int = 1  # аналог блокировки: 0 - не работает, 1 - работает
+    is_active: int = 0  # аналог блокировки: 0 - не работает, 1 - работает
     first_name: str = ''
     last_name: str = ''
     username: str = '(не указан)'

@@ -3,7 +3,7 @@ import aiogram.types as aiotypes
 import config
 from datatypes import User, Admin
 from datatypes import user_changeable_columns
-
+import settings
 
 def init_project_db():
     """Создает две таблицы в project.db"""
@@ -84,7 +84,7 @@ def fill_points(PointsID: list[str], N_WGS84: list[str], E_WGS84: list[str]) -> 
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
     for pid, lat, lon in zip(PointsID, N_WGS84, E_WGS84):
-        cursor.execute(f'INSERT INTO Points (PointID, N_WGS84_plan, E_WGS84_plan) VALUES (?, ?, ?)',
+        cursor.execute('INSERT INTO Points (PointID, N_WGS84_plan, E_WGS84_plan) VALUES (?, ?, ?)',
                        (pid, lat, lon))
     connection.commit()
     connection.close()
@@ -94,7 +94,7 @@ def fill_complects(ComplectsID: list[str]) -> None:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
     for cid in ComplectsID:
-        cursor.execute(f'INSERT INTO Devices (ComplectID, status) VALUES (?, ?)',
+        cursor.execute('INSERT INTO Devices (ComplectID, status) VALUES (?, ?)',
                        (cid, 'свободен'))
     connection.commit()
     connection.close()
@@ -103,11 +103,17 @@ def fill_complects(ComplectsID: list[str]) -> None:
 def get_points_started() -> str:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
-    selected_points = cursor.execute('SELECT (PointID, ComplectID, datetime_start, user_id) '
-                                     'FROM Points WHERE datetime_start NOT NULL')
+    try:
+        selected_points = cursor.execute('SELECT PointID, ComplectID, datetime_start, Comments '
+                                         'FROM Points WHERE datetime_start NOT NULL')
+    except sqlite3.DatabaseError as exc:
+        connection.close()
+        return f'Извините, возникла ошибка при работе с БД:\n{exc}'
     msg = ''
-    for pid in selected_points:
-        msg += f'{pid[0]}: установлен {pid[1]} с {pid[2]} (uid={pid[3]})\n\n'
+    selected_points = list(selected_points)
+    if len(selected_points) > 0:
+        for pid in selected_points:
+            msg += f'{pid[0]}: установлен {pid[1]} с {pid[2]} ({pid[3]})\n\n'
 
     connection.close()
     return msg
@@ -115,12 +121,66 @@ def get_points_started() -> str:
 def get_points_rest() -> str:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
-    selected_points = cursor.execute('SELECT (PointID, N_WGS84, E_WGS84) FROM Points WHERE datetime_start IS NULL')
+    try:
+        selected_points = cursor.execute('SELECT PointID, N_WGS84_plan, E_WGS84_plan '
+                                         'FROM Points WHERE datetime_start IS NULL')
+    except sqlite3.DatabaseError as exc:
+        connection.close()
+        return f'Извините, возникла ошибка при работе с БД:\n{exc}'
     msg = ''
-    for pid in selected_points:
-        msg += f'точка {pid[0]} ({pid[1]}, {pid[2]}) без прибора\n\n'
+    selected_points = list(selected_points)
+    if len(selected_points) > 0:
+        for pid in selected_points:
+            msg += f'{pid[0]} ({pid[1]} {pid[2]}) без прибора\n\n'
     connection.close()
     return msg
+
+
+def get_busy_complects() -> str:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    try:
+        selected = cursor.execute('SELECT ComplectID, PointID FROM Devices WHERE status = ?',
+                                  ('установлен',))
+    except sqlite3.DatabaseError as exc:
+        connection.close()
+        return f'Извините, возникла ошибка при работе с БД:\n{exc}'
+    msg = ''
+    selected = list(selected)
+    if len(selected) > 0:
+        for cid in selected:
+            msg += f'{cid[0]} установлен в {cid[1]}\n'
+    else:
+        msg = 'Нет установленных комплектов.'
+
+    connection.close()
+    return msg
+
+
+def get_free_complects() -> str:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    try:
+        selected = cursor.execute('SELECT ComplectID FROM Devices WHERE status = ?',
+                                  ('свободен',))
+    except sqlite3.DatabaseError as exc:
+        connection.close()
+        return f'Извините, возникла ошибка при работе с БД:\n{exc}'
+    selected = list(selected)
+    if len(selected) > 0:
+        msg = 'Свободные комплекты: '
+        for j, cid in enumerate(selected[:-1]):
+            if j < settings.bot_max_show_complects:
+                msg += f'{cid[0]}, '
+            else:
+                msg += '..., '
+                break
+        msg += f'{selected[-1][0]}.'
+    else:
+        msg = 'Нет свободных комплектов.'
+    connection.close()
+    return msg
+
 
 def get_point(point_id: str) -> list[str]:
     connection = sqlite3.connect('databases/project.db')
