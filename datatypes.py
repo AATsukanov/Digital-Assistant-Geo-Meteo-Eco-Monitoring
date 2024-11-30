@@ -16,6 +16,7 @@ class Task:
         self.nComplects: int = 0  # количество приборов на полевой день
         self.fname_project_points: str = ''  # *.xlsx файл
         self.recommended_group_of_devices = set(settings.devices_groups)
+        self.subgroups_dict: dict = {}
         self.Point_ID = np.array([])
         self.N_WGS84 = np.array([])
         self.E_WGS84 = np.array([])
@@ -69,12 +70,49 @@ class Task:
         print(f'Загружено {self.nComplects} комплектов приборов.')
         return True
 
+    def create_subgroups_of_devices(self, echo: bool = False) -> None:
+        """ Собирает идентификаторы комплектов/приборов их групп и подгрупп в удобный для tg-бота словарь:
+            dict{группа: dict{погруппа: list[комплекты]}}
+        """
+        # создаем дополнительный столбец с названиями подгрупп:
+        self.df_of_complects['SubGroups'] = self.df_of_complects['GroupID']
+        for j, cid in enumerate(self.df_of_complects['ComplectID']):
+            if str(cid).isdigit():
+                if len(cid) < 2:
+                    sub = '1-9'
+                elif len(cid) < 3:
+                    sub = f'{cid[0]}0-{cid[0]}9'
+                else:
+                    sub = '100+'
+            else:
+                if len(cid) < 4:
+                    # еще как вариант: sub = f'{cid[:2]}[0-9]'
+                    sub = f'{cid[:2]}0-{cid[:2]}9'
+                else:
+                    sub = f'{cid[0]}100+'
+            self.df_of_complects.iloc[j, self.df_of_complects.columns.get_loc('SubGroups')] = sub
+
+        # обнуляем словарь:
+        self.subgroups_dict: dict = {}
+        for GroupID in sorted(list(set(self.df_of_complects['GroupID']))):
+            sub = {}
+            for subgroup in sorted(list(set(self.df_of_complects[self.df_of_complects['GroupID'] == GroupID]['SubGroups']))):
+                complects_list = self.df_of_complects[self.df_of_complects['SubGroups'] == subgroup]
+                complects_list = sorted(list(complects_list['ComplectID']))
+                if len(complects_list) > 0:
+                    sub[str(subgroup)] = complects_list
+            if not sub == {}:
+                self.subgroups_dict[str(GroupID)] = sub
+        if echo:
+            print(self.subgroups_dict)
+
     def reset(self):
         self.ProjectName: str = '(не указано)'
         self.nPoints: int = 0
         self.nComplects: int = 0
         self.fname_project_points: str = ''
         self.recommended_group_of_devices = set(settings.devices_groups)
+        self.subgroups_dict: dict = {}
         self.Point_ID = np.array([])
         self.N_WGS84 = np.array([])
         self.E_WGS84 = np.array([])
@@ -85,16 +123,19 @@ class Task:
 
     def save_as_json(self, fname: str) -> None:
         # аккуратно собираем словарь:
-        obj = {}
+        obj: dict[str: dict[str: list[str]]] = {}
         obj['ProjectName']: str = self.ProjectName
         obj['nPoints']: int = self.nPoints
         obj['nComplects']: int = self.nComplects
         obj['recommended_group_of_devices']: list[str] = self.recommended_group_of_devices
+        obj['subgroups_dict']: dict = self.subgroups_dict
         obj['map_image']: str = self.map_image
         obj['TaskDetails']: str = self.TaskDetails
         obj['date']: str = self.date
 
-        json.dump()
+        # преобразуем в json и сохраняем:
+        with open(fname, 'w') as file:
+            json.dump(obj, file)
 
 
 @dataclass

@@ -28,6 +28,7 @@ class App(tk.Tk):
         super().__init__()  # запуск инициализации родительского класса
         self.task = Task()  # объект задания
         self.fname_map_image: str = ''  # растровая карта
+        self.exchange_data_json: str = ''  # файл для обмена параметрами с telegram-ботом
         self.init_GUI()
 
     def init_GUI(self):
@@ -204,24 +205,13 @@ class App(tk.Tk):
                 df.iloc[j, df.columns.get_loc('new_mark')] = 'да'
 
         self.task.df_of_complects = df[df['new_mark'] == 'да']
+
         # убираем временный столбец и создаем подгруппы:
         self.task.df_of_complects = self.task.df_of_complects[['ComplectID', 'GroupID']]
-        self.task.df_of_complects['SubGroups'] = self.task.df_of_complects['GroupID']
-        for j, cid in enumerate(self.task.df_of_complects['ComplectID']):
-            if str(cid).isdigit():
-                if len(cid) < 2:
-                    sub = '1-9'
-                elif len(cid) < 3:
-                    sub = f'{cid[0]}0-{cid[0]}9'
-                else:
-                    sub = '100+'
-            else:
-                if len(cid) < 4:
-                    # еще как вариант: sub = f'{cid[:2]}[0-9]'
-                    sub = f'{cid[:2]}0-{cid[:2]}9'
-                else:
-                    sub = f'{cid[0]}100+'
-            self.task.df_of_complects.iloc[j, self.task.df_of_complects.columns.get_loc('SubGroups')] = sub
+        # группируем в словарь словарей:
+        self.task.create_subgroups_of_devices()
+        if echo:
+            print('Создан словарь подгрупп приборов.')
 
         # сохраняем в excel:
         if write_subgroups_to_excel:
@@ -241,7 +231,8 @@ class App(tk.Tk):
         self.task.date = str(datetime.date.today())
 
         # Упаковываем в json:
-
+        self.exchange_data_json = settings.fparams_json.replace("$REPLACE=TODAY$", datetime.date.today())  # обновляем дату
+        self.task.save_as_json(fname=self.exchange_data_json)
         return True
 
     def check_devices_groups(self, recommended_group_of_devices: list[str]) -> bool:
@@ -275,7 +266,7 @@ class App(tk.Tk):
     @onewtreadecorator
     def on_run_telegram_bot(self):
         print('Запуск Telegram-бота...')
-        cmd_line = f'python main.py {settings.fparams_json}'
+        cmd_line = f'python main.py {self.exchange_data_json}'
         print(f'командой: {os.getcwd()}> {cmd_line}')
         os.system(cmd_line)
 

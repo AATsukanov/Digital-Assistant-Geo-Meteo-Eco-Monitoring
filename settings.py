@@ -1,12 +1,10 @@
-import datetime
-
 # Настройки окна
 geometry = '652x472+0+0'
 canvas_bg = '#AAA5B5'
 canvas_bg_img = 'img/bg.png'
 
 # Имя *.json файла для передачи параметров при запуске Telegram-бота:
-fparams_json = f'params/exchange.{datetime.date.today()}.json'
+fparams_json = f'params/exchange.$REPLACE=TODAY$.json'
 
 # Путь сохранения временных статических карт:
 temp_maps_folder = 'temp_maps/'

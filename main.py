@@ -24,7 +24,7 @@ from logger import logger
 bot = Bot(token=config.token)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
-input_data: str = ''  # параметры задания и другие входные данные (json) от основного приложения (app)
+input_data: dict = {}  # параметры задания и другие входные данные (json) от основного приложения (app)
 
 class UserStates(StatesGroup):
     update_user_param = State()
@@ -337,7 +337,7 @@ async def all_messages(message: Message):
     await message.answer('Команда не распознана, для начала, пожалуйста, нажмите на /start')
 
 
-def main(skip_updates: bool = True, echo: bool = False) -> None:
+def main(skip_updates: bool = True, echo: bool = True) -> None:
     global input_data
 
     # Расположение задания и других json-данных от приложения (app)
@@ -353,6 +353,12 @@ def main(skip_updates: bool = True, echo: bool = False) -> None:
             print(f'аргументы: sys.argv[j] = {param}')
         print('Количество аргументов:', len(sys.argv))
 
+    # декодирование из json:
+    input_data = json.load(input_data)
+    if echo:
+        print('Распаковка json:\n', input_data)
+
+    # Запуск основного цикла telegram-бота:
     executor.start_polling(dp, skip_updates=skip_updates, on_startup=on_startup)
 
 if __name__ == '__main__':
