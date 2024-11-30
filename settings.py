@@ -16,10 +16,10 @@ tables_dir = 'tables/'
 table_devices_info = 'tables/DevicesInfo.xlsx'
 table_of_complects = 'tables/TableOfComplects.xlsx'
 
-# Язык по-умолчанию:
-default_language = 'Ru'
+# настройки клавиатур telegram-бота:
+points_PointID_kb_buttons_in_row: int = 4
 
-# Сетка кнопок быстрого выбора комплекта приборов по GroupID (тип dict(int: list(int)):
+# Сетка кнопок быстрого выбора комплекта приборов по GroupID (тип dict(int: list[int]):
 devices_GroupID_kb_layout = {
                                 1: [1],
                                 2: [2],
@@ -51,3 +51,6 @@ def device_image(device_group: str) -> str:
     '''
     fname = f'img/complect-{device_group}.png'
     return fname
+
+# Язык по-умолчанию:
+default_language = 'Ru'

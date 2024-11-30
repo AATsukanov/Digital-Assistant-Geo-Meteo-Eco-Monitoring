@@ -13,6 +13,7 @@ class Task:
     def __init__(self):
         self.ProjectName: str = '(не указано)'
         self.nPoints: int = 0  # количество проектных точек
+        self.nComplects: int = 0  # количество приборов на полевой день
         self.fname_project_points: str = ''  # *.xlsx файл
         self.recommended_group_of_devices = set(settings.devices_groups)
         self.Point_ID = np.array([])
@@ -21,7 +22,7 @@ class Task:
         self.map_image: str = ''
         self.df_of_complects = pd.DataFrame([])
         self.TaskDetails: str = ''
-        self.date = datetime.date.today()
+        self.date: str = str(datetime.date.today())
 
     def load(self, fname: str, echo=False) -> bool:
         if not os.path.isfile(fname):
@@ -64,12 +65,14 @@ class Task:
 
         self.df_of_complects = data_pd.drop_duplicates(subset='ComplectID', keep='last', inplace=False)
 
-        print(f'Загружено {len(self.df_of_complects["ComplectID"])} комплектов приборов.')
+        self.nComplects = len(self.df_of_complects["ComplectID"])
+        print(f'Загружено {self.nComplects} комплектов приборов.')
         return True
 
     def reset(self):
         self.ProjectName: str = '(не указано)'
         self.nPoints: int = 0
+        self.nComplects: int = 0
         self.fname_project_points: str = ''
         self.recommended_group_of_devices = set(settings.devices_groups)
         self.Point_ID = np.array([])
@@ -78,20 +81,20 @@ class Task:
         self.map_image: str = ''
         self.df_of_complects = pd.DataFrame([])
         self.TaskDetails: str = ''
-        self.date = datetime.date.today()
+        self.date: str = str(datetime.date.today())
 
     def save_as_json(self, fname: str) -> None:
         # аккуратно собираем словарь:
         obj = {}
-        obj['ProjectName'] = self.ProjectName
-        obj['nPoints'] = self.nPoints
-        obj['recommended_group_of_devices'] = self.recommended_group_of_devices
-        db
-        obj['Point_ID'] = list(self.Point_ID)
-        obj['N-WGS84'] = list(self.N_WGS84)
-        obj['N-WGS84'] = list(self.N_WGS84)
+        obj['ProjectName']: str = self.ProjectName
+        obj['nPoints']: int = self.nPoints
+        obj['nComplects']: int = self.nComplects
+        obj['recommended_group_of_devices']: list[str] = self.recommended_group_of_devices
+        obj['map_image']: str = self.map_image
+        obj['TaskDetails']: str = self.TaskDetails
+        obj['date']: str = self.date
 
-        json.dumps()
+        json.dump()
 
 
 @dataclass

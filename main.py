@@ -18,13 +18,13 @@ import datatypes
 import keyboards as kb
 import database as db
 from datatypes import User, Admin, user_changeable_columns
-#import admin
 import docs
 from logger import logger
 
 bot = Bot(token=config.token)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
+input_data: str = ''  # параметры задания и другие входные данные (json) от основного приложения (app)
 
 class UserStates(StatesGroup):
     update_user_param = State()
@@ -156,6 +156,22 @@ async def support_contacts(call: CallbackQuery):
     text += f'страница автора: {config.AuthorInfo.author_page}'
     await call.message.answer(text=text, parse_mode='html')
     await call.answer()
+
+
+@dp.message_handler(text='Открыть задание')
+async def open_task(message: Message):
+    global input_data
+    if db.user_is_active(message.from_id) == 0:
+        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
+        return
+    if input_data == '':
+        await message.answer(text='Текущие задания отсутствуют', reply_markup=kb.start_kb)
+    # направляем схему точек и меню
+    with open('temp_maps/_temp_yandex_AUTO_n=10.png', 'rb') as map_img:
+        await message.answer_photo(photo=map_img,
+                                   caption='<b>название проекта</b>\nописание...',
+                                   parse_mode='html',
+                                   reply_markup=kb.start_kb)
 
 
 @dp.message_handler(text='Начать работу >')
@@ -321,11 +337,23 @@ async def all_messages(message: Message):
     await message.answer('Команда не распознана, для начала, пожалуйста, нажмите на /start')
 
 
-def main():
-    for j, param in enumerate(sys.argv):
-        print(f'{j}: sys.argv >> {param}')
-    print('Количество аргументов:', len(sys.argv))
+def main(skip_updates: bool = True, echo: bool = False) -> None:
+    global input_data
+
+    # Расположение задания и других json-данных от приложения (app)
+    # передается вторым (т.е. [1]) аргументом в команде запуска бота:
+    if len(sys.argv) > 1:
+        input_data = sys.argv[1]
+        print(f'bot-main: параметры входного задания получены в {input_data}')
+    else:
+        input_data = ''
+
+    if echo:
+        for j, param in enumerate(sys.argv):
+            print(f'аргументы: sys.argv[j] = {param}')
+        print('Количество аргументов:', len(sys.argv))
+
+    executor.start_polling(dp, skip_updates=skip_updates, on_startup=on_startup)
 
 if __name__ == '__main__':
     main()
-    executor.start_polling(dp, skip_updates=True, on_startup=on_startup)

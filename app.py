@@ -13,6 +13,7 @@ import config
 import settings
 from datatypes import Task
 from earth import StaticEarth
+import database as db
 
 def onewtreadecorator(func):
     '''Декорируем функции, которые хотим запустить в параллельном потоке'''
@@ -50,7 +51,8 @@ class App(tk.Tk):
         # Menu->File:
         self.menu_file = tk.Menu(self.MenuBar, tearoff=0)
         self.menu_file.add_command(label='Открыть задание из *.xlsx', command=self.on_open_xlsx)
-        self.menu_file.add_command(label='Загрузить проект из *.kml', state=tk.DISABLED, command=self.on_open_kml)
+        self.menu_file.add_command(label='Загрузить метки из *.kml', state=tk.DISABLED, command=self.on_open_kml)
+        self.menu_file.add_command(label='Загрузить метки из *.gpx', state=tk.DISABLED, command=self.on_open_gpx)
         self.menu_file.add_separator()
         self.menu_file.add_command(label='Статистика проекта', command=self.on_project_stat)
         self.menu_file.add_command(label='Сведения', command=self.on_about)
@@ -74,6 +76,15 @@ class App(tk.Tk):
         self.menu_tg_bot.add_separator()
         self.menu_tg_bot.add_command(label='Запустить Telegram-бота', command=self.on_run_telegram_bot)
         self.MenuBar.add_cascade(label='Telegram-бот', menu=self.menu_tg_bot)
+
+        # Menu->Управление БД:
+        self.menu_db = tk.Menu(self.MenuBar, tearoff=0)
+        self.menu_db.add_command(label='Инициализация users.db: Users, Admins', command=self.on_db_init_users)
+        self.menu_db.add_command(label='Инициализация project.db: Points, Devices', command=self.on_db_init_project)
+        self.menu_db.add_separator()
+        self.menu_db.add_command(label='Заполнение Points в project.db', command=self.on_fill_point_in_project_db)
+        self.menu_db.add_command(label='Заполнение Devices в project.db', command=self.on_fill_devices_in_project_db)
+        self.MenuBar.add_cascade(label='Управление БД', menu=self.menu_db)
 
         # Menu->Настройки:
         self.menu_settings = tk.Menu(self.MenuBar, tearoff=0)
@@ -114,13 +125,45 @@ class App(tk.Tk):
         fname_map = earth.load_map()
         if not fname_map == '':
             self.show_image(fname_map)
-            self.fname_map_image =fname_map
+            self.fname_map_image = fname_map
 
     def on_open_kml(self):
         pass
 
 
-    def on_create_task(self, echo=True) -> bool:
+    def on_open_gpx(self):
+        pass
+
+
+    def on_fill_point_in_project_db(self) -> bool:
+        if self.task.nPoints > 0:
+            db.fill_points(
+                PointsID=list(self.task.Point_ID),
+                N_WGS84=list(self.task.N_WGS84),
+                E_WGS84=list(self.task.E_WGS84)
+            )
+            print(f'ИНФО: в таблицу Points (project.db) записаны {self.task.nPoints} '
+                  'точек, пожалуйста, проверьте файл БД.')
+            return True
+        tkmb.showinfo(title='Заполнение таблицы Points в project.db:',
+                      message='Точки не загружены, пожалуйста, загрузите проект/задание.')
+        return False
+
+    def on_fill_devices_in_project_db(self) -> bool:
+        if self.task.nComplects > 0:
+            db.fill_complects(ComplectsID=list(self.task.df_of_complects["ComplectID"]))
+            print(f'ИНФО: в таблицу Devices (project.db) записаны {self.task.nComplects} '
+                  'названий комплектов, пожалуйста, проверьте БД.')
+            return True
+        tkmb.showinfo(title='Заполнение таблицы Devices в project.db:',
+                      message='Таблица комплектов не загружена, пожалуйста, создайте задание.')
+        return False
+
+
+    def on_create_task(self, write_subgroups_to_excel=False, echo=True) -> bool:
+        """Это основная функция, в которой собирается задание
+        и подготавливается к отправке в telegram-бот."""
+
         if self.task.nPoints < 1:
             msg = 'Похоже, проект не загружен, либо не содержит плановых точек.\n'\
                   'Пожалуйста, загрузите Таблицу точек проекта:\nМеню -> Файл -> Открыть задание из *.xlsx'
@@ -181,10 +224,11 @@ class App(tk.Tk):
             self.task.df_of_complects.iloc[j, self.task.df_of_complects.columns.get_loc('SubGroups')] = sub
 
         # сохраняем в excel:
-        fname = f'_temp_subgroups-of-complects.{today}.xlsx'
-        Writer = pd.ExcelWriter(os.path.join(settings.tables_dir, fname))
-        self.task.df_of_complects.to_excel(Writer, sheet_name='SubGroups', index=True)
-        Writer._save()
+        if write_subgroups_to_excel:
+            fname = f'_temp_subgroups-of-complects.{today}.xlsx'
+            Writer = pd.ExcelWriter(os.path.join(settings.tables_dir, fname))
+            self.task.df_of_complects.to_excel(Writer, sheet_name='SubGroups', index=True)
+            Writer._save()
 
         # Описание, комментарии к проведению полевых работ в свободной форме:
         self.task.TaskDetails = tksd.askstring(parent=self, title='Создание полевого задания',
@@ -193,8 +237,11 @@ class App(tk.Tk):
                                                       '(в свободной форме) для полевых специалистов:',
                                                initialvalue='')
 
-        # Дата формирования задания:
-        self.task.date = datetime.date.today()
+        # Дата формирования задания (тип str):
+        self.task.date = str(datetime.date.today())
+
+        # Упаковываем в json:
+
         return True
 
     def check_devices_groups(self, recommended_group_of_devices: list[str]) -> bool:
@@ -222,12 +269,32 @@ class App(tk.Tk):
                     'Пожалуйста, загрузите Таблицу точек проекта: Меню -> Файл -> Открыть задание из *.xlsx'
         tkmb.showinfo(parent=self, title='Статистика проекта', message=stat)
 
+
+
+
     @onewtreadecorator
     def on_run_telegram_bot(self):
         print('Запуск Telegram-бота...')
         cmd_line = f'python main.py {settings.fparams_json}'
         print(f'командой: {os.getcwd()}> {cmd_line}')
         os.system(cmd_line)
+
+
+    def on_db_init_users(self):
+        file_db = 'databases/users.db'
+        if os.path.isfile(file_db):
+            print(f'ИНФО: база данных {file_db} уже существует.')
+        else:
+            db.init_users_db()
+            print(f'ИНФО: база данных {file_db} - инициализирована.')
+
+    def on_db_init_project(self):
+        file_db = 'databases/project.db'
+        if os.path.isfile(file_db):
+            print(f'ИНФО: база данных {file_db} уже существует.')
+        else:
+            db.init_users_db()
+            print(f'ИНФО: база данных {file_db} - инициализирована.')
 
     def on_app_settings(self):
         tkmb.showinfo(parent=self, title='Настройка основного приложения',

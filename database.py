@@ -5,7 +5,6 @@ from datatypes import User, Admin
 from datatypes import user_changeable_columns
 
 
-
 def init_project_db():
     """Создает две таблицы в project.db"""
 
@@ -42,8 +41,6 @@ def init_project_db():
     # <ComplectID> is <busy> at <PointID> by <UserID> since <datetime_start>
     connection.commit()
     connection.close()
-
-
 
 
 def init_users_db():
@@ -103,12 +100,103 @@ def fill_complects(ComplectsID: list[str]) -> None:
     connection.close()
 
 
+def get_points_started() -> str:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    selected_points = cursor.execute('SELECT (PointID, ComplectID, datetime_start, user_id) '
+                                     'FROM Points WHERE datetime_start NOT NULL')
+    msg = ''
+    for pid in selected_points:
+        msg += f'{pid[0]}: установлен {pid[1]} с {pid[2]} (uid={pid[3]})\n\n'
+
+    connection.close()
+    return msg
+
+def get_points_rest() -> str:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    selected_points = cursor.execute('SELECT (PointID, N_WGS84, E_WGS84) FROM Points WHERE datetime_start IS NULL')
+    msg = ''
+    for pid in selected_points:
+        msg += f'точка {pid[0]} ({pid[1]}, {pid[2]}) без прибора\n\n'
+    connection.close()
+    return msg
+
+def get_point(point_id: str) -> list[str]:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    point = cursor.execute('SELECT * FROM Points WHERE id = ?', (point_id,)).fetchone()
+    connection.close()
+    return point
+
+
+def get_complect(complect_id: str) -> list[str]:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+    complect = cursor.execute('SELECT * FROM Devices WHERE id = ?', (complect_id,)).fetchone()
+    connection.close()
+    return complect
+
+
+def set_point_start(point_id: str, lat_fact: float, lon_fact: float,
+                    complect_id: str, user_id: int, datetime_start: str) -> str:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+
+    pid_check = cursor.execute('SELECT * FROM Points WHERE id=?', (point_id,))
+    cid_check = cursor.execute('SELECT * FROM Devices WHERE id=?', (complect_id,))
+    if pid_check.fetchone() is None:
+        connection.close()
+        return f'Извините, точка {point_id} в базе не найдена, или отсутствует подключение.'
+    if cid_check.fetchone() is None:
+        connection.close()
+        return f'Извините, комплект {complect_id} в базе не найден, или отсутствует подключение.'
+
+    try:
+        # Запись: в Таблицу Points
+        cursor.execute('UPDATE Points SET '
+                       '(ComplectID, datetime_start, N_WGS84_fact, E_WGS84_fact) = (?, ?, ?, ?) WHERE id = ?',
+                       (complect_id, str(datetime_start), lat_fact, lon_fact, point_id))
+        # Запись: в Таблицу Devices // # <ComplectID> is <busy> at <PointID> by <UserID> since <datetime_start>
+        cursor.execute('UPDATE Devices SET (status, PointID, UserID, datetime_start) = (?, ?, ?, ?) WHERE id = ?',
+                       ('установлен', point_id, user_id, str(datetime_start), complect_id))
+    except sqlite3.DatabaseError as exc:
+        connection.close()
+        return f'Извините, возникла ошибка при работе с БД:\n{exc}'
+
+    connection.commit()
+    connection.close()
+    return f'Прибор {complect_id} в точке {point_id} установлен.'
+
+
+def set_point_end(point_id: str, user_id: int, datetime_end: str) -> str:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+
+    pid_check = cursor.execute('SELECT * FROM Points WHERE id=?', (point_id,))
+    if pid_check.fetchone() is None:
+        connection.close()
+        return f'Извините, точка {point_id} в базе не найдена, или отсутствует подключение.'
+
+    try:
+        cursor.execute(
+            'UPDATE Points SET (datetime_end, Comments) = (?, ?) WHERE id = ?',
+            (str(datetime_end), f'снял: {user_id}', point_id))
+    except sqlite3.DatabaseError as exc:
+        connection.close()
+        return f'Извините, возникла ошибка при работе с БД:\n{exc}'
+
+    connection.commit()
+    connection.close()
+    return f'Регистрация в точке {point_id} завершена.'
+
+
 '''Далее блок CRUD-функций для Users и Admins
 =============================================='''
 
 def add_admins():
-    '''Впервые в db прописываются только id (telegram.id) admin-пользователей,
-    далее при их подключении по их желанию, подтягиваются данные и заполняются остальные поля.'''
+    """Впервые в db прописываются только id (telegram.id) admin-пользователей,
+    далее при их подключении по их желанию, подтягиваются данные и заполняются остальные поля."""
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
 
@@ -117,7 +205,7 @@ def add_admins():
         if check_user.fetchone() is None:
             # добавляем:
             a = Admin(id=admin_id)
-            cursor.execute(f'INSERT INTO Admins VALUES (?, ?, ?, ?, ?)',
+            cursor.execute('INSERT INTO Admins VALUES (?, ?, ?, ?, ?)',
                            (a.id, a.first_name, a.last_name, a.username, a.language_code))
 
     connection.commit()
@@ -143,7 +231,7 @@ def add_user(user: User, echo: bool=True):
 
     check_user = cursor.execute('SELECT * FROM Users WHERE id=?', (user.id,))
     if check_user.fetchone() is None:
-        cursor.execute(f'INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        cursor.execute('INSERT INTO Users VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
                        (user.id, user.is_working_now, user.is_active,
                         user.first_name, user.last_name, user.username, user.language_code,
                         user.phone, user.country, user.city, user.birthdate, user.work_email))
@@ -160,7 +248,7 @@ def add_admin(admin: Admin):
 
     check_user = cursor.execute('SELECT * FROM Admins WHERE id=?', (admin.id,))
     if check_user.fetchone() is None:
-        cursor.execute(f'INSERT INTO Admin VALUES (?, ?, ?, ?, ?)',
+        cursor.execute('INSERT INTO Admin VALUES (?, ?, ?, ?, ?)',
                        (admin.id, admin.first_name, admin.last_name, admin.username, admin.language_code))
         connection.commit()
 
@@ -193,7 +281,7 @@ def update_user_from_tg(user_tg: aiotypes.user.User) -> bool:
     check = cursor.execute('SELECT * FROM Users WHERE id=?', (user.id,))
     if not check.fetchone() is None:
         cursor.execute(
-            f'UPDATE Users SET (first_name, last_name, username, language_code) = (?, ?, ?, ?) WHERE id = ?',
+            'UPDATE Users SET (first_name, last_name, username, language_code) = (?, ?, ?, ?) WHERE id = ?',
             (user.first_name, user.last_name, user.username, user.language_code, user.id))
         connection.commit()
         connection.close()
@@ -209,7 +297,7 @@ def update_admin(admin: Admin) -> bool:
 
     check = cursor.execute('SELECT * FROM Admins WHERE id=?', (admin.id,))
     if not check.fetchone() is None:
-        cursor.execute(f'UPDATE Admins SET (first_name, last_name, username, language_code) = (?, ?, ?, ?) WHERE id = ?',
+        cursor.execute('UPDATE Admins SET (first_name, last_name, username, language_code) = (?, ?, ?, ?) WHERE id = ?',
                        (admin.first_name, admin.last_name, admin.username, admin.language_code, admin.id))
         connection.commit()
         connection.close()
@@ -306,7 +394,7 @@ def users_stat() -> tuple[int, int, int, int]:
 def deactivate_user(user_id: int) -> None:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
-    cursor.execute(f'UPDATE Users SET is_active = ? WHERE id = ?', (0, user_id))
+    cursor.execute('UPDATE Users SET is_active = ? WHERE id = ?', (0, user_id))
     connection.commit()
     connection.close()
 
@@ -314,7 +402,7 @@ def deactivate_user(user_id: int) -> None:
 def activate_user(user_id: int) -> None:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
-    cursor.execute(f'UPDATE Users SET is_active = ? WHERE id = ?', (1, user_id))
+    cursor.execute('UPDATE Users SET is_active = ? WHERE id = ?', (1, user_id))
     connection.commit()
     connection.close()
 
@@ -327,7 +415,7 @@ def user_started_work(user_id: int) -> bool:
     cursor = connection.cursor()
     is_active = cursor.execute('SELECT is_active FROM Users WHERE id = ?', (user_id,)).fetchone()
     if is_active[0] == 1:
-        cursor.execute(f'UPDATE Users SET is_working_now = ? WHERE id = ?', (1, user_id))
+        cursor.execute('UPDATE Users SET is_working_now = ? WHERE id = ?', (1, user_id))
         connection.commit()
         connection.close()
     else:
@@ -342,9 +430,10 @@ def user_completed_work(user_id: int) -> bool:
     cursor = connection.cursor()
     is_working_now = cursor.execute('SELECT is_working_now FROM Users WHERE id = ?', (user_id,)).fetchone()
     if is_working_now[0] == 1:
-        cursor.execute(f'UPDATE Users SET is_working_now = ? WHERE id = ?', (0, user_id))
+        cursor.execute('UPDATE Users SET is_working_now = ? WHERE id = ?', (0, user_id))
         connection.commit()
         connection.close()
+        return True
     else:
         connection.close()
         return False
