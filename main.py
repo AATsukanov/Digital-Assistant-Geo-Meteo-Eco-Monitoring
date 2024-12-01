@@ -18,7 +18,7 @@ import datatypes
 import keyboards as kb
 import database as db
 from datatypes import User, Admin, user_changeable_columns
-import docs
+import docs, utils
 from logger import logger
 
 bot = Bot(token=config.token)
@@ -27,12 +27,16 @@ dp = Dispatcher(bot=bot, storage=MemoryStorage())
 input_data: dict = {}  # параметры задания и другие входные данные (json) от основного приложения (app)
 reg_loc_button: dict = {'visible': False, 'label': ''}  # динамические настройки кнопки регистрации геолокации точки
 
-class UserStates(StatesGroup):
-    update_user_param = State()
-
 
 class WorkStates(StatesGroup):
-    pass
+    point_id = State()
+    group_id = State()
+    subgroup = State()
+    complect = State()
+
+
+class UserStates(StatesGroup):
+    update_user_param = State()
 
 
 class AdminStates(StatesGroup):
@@ -48,6 +52,7 @@ async def on_startup(dispatcher: Dispatcher) -> None:
         types.BotCommand('help',  'Помощь'),
         types.BotCommand('end', 'Завершить')
     ])
+
 
 @dp.message_handler(commands=['start'])
 async def start(message: Message):
@@ -67,6 +72,7 @@ async def start(message: Message):
     reg_loc_button['visible'] = False  # для start_kb reg_loc_button - invisible
     with open(config.welcome_img, 'rb') as img:
         await message.answer_photo(photo=img, caption=f'Здравствуйте, {greeting_name}', reply_markup=kb.start_kb)
+
 
 @dp.message_handler(commands=['menu'])
 @dp.message_handler(text=['< в главное меню'])
@@ -187,6 +193,26 @@ async def open_task(message: Message):
                                    parse_mode='html',
                                    reply_markup=kb.start_kb)
 
+
+@dp.message_handler(text='Приборная база')
+async def devices_base(message: Message):
+    if db.user_is_active(message.from_id) == 0:
+        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
+        return
+    await message.answer('Выберете тип прибора по GroupID:', reply_markup=kb.all_groups_kb())
+
+
+@dp.callback_query_handler(lambda callback_query: json.loads(callback_query.data)['#'] == 'Groups')
+async def point_coordinates(call: CallbackQuery):
+    callback_data = call.data
+    callback_data = json.loads(callback_data)
+    GroupID = callback_data['GroupID']
+    device_model, description, url = utils.get_devices_description(GroupID=GroupID)
+    caption = f'<b>{device_model}</b>\n\n{description}'
+    await call.message.answer_photo(caption=caption, parse_mode='html', reply_markup=kb.url_kb(url))
+    await call.answer()
+
+
 @dp.message_handler(text='Начать работу >')
 async def start_work(message: Message):
     if db.user_is_active(message.from_id) == 0:
@@ -199,19 +225,12 @@ async def start_work(message: Message):
     await message.answer(text='Приступить к полевым работам', reply_markup=kb.work_menu_kb)
 
 
-@dp.message_handler(text='Начать работу >')
-async def start_work(message: Message):
-    if db.user_is_active(message.from_id) == 0:
-        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
+@dp.message_handler(text='Текущий прогресс')
+async def current_progress_info(message: Message):
+    if db.user_started_work(message.from_id) == 0:
+        await message.answer(text='Сначала, пожалуйста, нажмите "Начать работу".')
         return
-
-
-@dp.message_handler(text='База данных')
-async def info(message: Message):
-    if db.user_is_active(message.from_id) == 0:
-        await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
-        return
-    await message.answer(text='Техническая информация', reply_markup=kb.field_info_kb)
+    await message.answer(text='Текущий прогресс:', reply_markup=kb.field_info_kb)
 
 
 @dp.callback_query_handler(text='project_points_rest')

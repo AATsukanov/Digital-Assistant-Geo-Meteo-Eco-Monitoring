@@ -18,7 +18,7 @@ start_kb = ReplyKeyboardMarkup(
         ],
         [
             KeyboardButton(text='Поддержка'),
-            KeyboardButton(text='База данных')
+            KeyboardButton(text='Приборная база')
         ],
         [
             KeyboardButton(text='Начать работу >')
@@ -63,6 +63,18 @@ help_kb = InlineKeyboardMarkup(
 )
 
 
+def all_groups_kb():
+    inline_kb = InlineKeyboardMarkup(resize_keyboard=True)
+    for gid in settings.devices_groups:
+        inline_kb.insert(InlineKeyboardButton(text=f'{gid}',
+                                              callback_data=json.dumps({'#': 'Groups', 'GroupID': gid})))
+    return inline_kb
+
+
+def url_kb(url: str):
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='перейти', url=url)]], resize_keyboard=True)
+
+
 def make_map_kb(lat: float, lon: float, reg_loc_button: dict) -> InlineKeyboardMarkup:
     inline_kb = InlineKeyboardMarkup()
     b11 = InlineKeyboardButton(text='Яндекс карта',
@@ -93,7 +105,7 @@ field_info_kb = InlineKeyboardMarkup(
 
 work_menu_kb = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text='Выбрать точку из задания')],
+        [KeyboardButton(text='Текущий прогресс')],
         [KeyboardButton(text='Установить прибор (запрос геолокации)', request_location=True)],
         [
             KeyboardButton(text='< в главное меню'), KeyboardButton(text='Снять прибор')
