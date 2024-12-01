@@ -22,7 +22,7 @@ table_devices_info = 'tables/DevicesInfo.xlsx'
 table_of_complects = 'tables/TableOfComplects.xlsx'
 
 # настройки клавиатур telegram-бота:
-points_PointID_kb_buttons_in_row: int = 4
+max_kb_buttons_in_row: int = 4
 
 # Сетка кнопок быстрого выбора комплекта приборов по GroupID (тип dict(int: list[int]):
 devices_GroupID_kb_layout = {

@@ -14,6 +14,7 @@ import json
 
 # импорт своих модулей
 import config
+import settings
 import datatypes
 import keyboards as kb
 import database as db
@@ -202,17 +203,6 @@ async def devices_base(message: Message):
     await message.answer('Выберете тип прибора по GroupID:', reply_markup=kb.all_groups_kb())
 
 
-@dp.callback_query_handler(lambda callback_query: json.loads(callback_query.data)['#'] == 'Groups')
-async def point_coordinates(call: CallbackQuery):
-    callback_data = call.data
-    callback_data = json.loads(callback_data)
-    GroupID = callback_data['GroupID']
-    device_model, description, url = utils.get_devices_description(GroupID=GroupID)
-    caption = f'<b>{device_model}</b>\n\n{description}'
-    await call.message.answer_photo(caption=caption, parse_mode='html', reply_markup=kb.url_kb(url))
-    await call.answer()
-
-
 @dp.message_handler(text='Начать работу >')
 async def start_work(message: Message):
     if db.user_is_active(message.from_id) == 0:
@@ -354,7 +344,7 @@ async def activate_user(call: CallbackQuery):
 
 
 @dp.message_handler(state=AdminStates.activate_user)
-async def activation(message: Message, state: State) -> None:
+async def activation(message: Message, state) -> None:
     text = message.text
     if text == '' or text == '/cancel' or not text.isdigit():
         await message.answer('Отменено...', reply_markup=kb.admin_kb)
@@ -380,7 +370,7 @@ async def deactivate_user(call: CallbackQuery):
 
 
 @dp.message_handler(state=AdminStates.deactivate_user)
-async def deactivation(message: Message, state: State) -> None:
+async def deactivation(message: Message, state) -> None:
     text = message.text
     if text == '' or text == '/cancel' or not text.isdigit():
         await message.answer('Отменено...', reply_markup=kb.admin_kb)
@@ -398,7 +388,7 @@ async def deactivation(message: Message, state: State) -> None:
 
 
 @dp.callback_query_handler(text='users_stat')
-async def show_users_stat(call: CallbackQuery):
+async def show_users_stat(call: CallbackQuery) -> None:
     n_users, n_admins, n_users_in_work, n_active_users = db.users_stat()
     text = '<b>ПОЛЕВЫЕ СПЕЦИАЛИСТЫ</b>\n'
     text += f' - всего: {n_users}\n'
@@ -410,25 +400,127 @@ async def show_users_stat(call: CallbackQuery):
     await call.message.answer(text=text, parse_mode='html')
     await call.answer()
 
+
 @dp.callback_query_handler(lambda callback_query: json.loads(callback_query.data)['#'] == 'Setup')
-async def point_coordinates(call: CallbackQuery):
+async def point_coordinates(call: CallbackQuery) -> None:
+    global input_data
     callback_data = call.data
     callback_data = json.loads(callback_data)
     lat = callback_data['lat']
     lon = callback_data['lon']
-    text = f'<b>callback_data</b> = {callback_data}'
-    await call.message.answer(text=text, parse_mode='html')
+    input_data[f'{call.from_user.id}']: list[float] = [lat, lon]
+    await call.message.answer(text=f'Координаты постановки <b>{lat}, {lon}</b> - зарегистрированы!', parse_mode='html')
+    await call.message.answer(text='<b>Выберете имя точки установки:</b>', parse_mode='html',
+                              reply_markup=kb.points_kb(input_data['Point_ID']))
+    await call.answer()
+    await WorkStates.point_id.set()
+
+
+@dp.message_handler(state=WorkStates.point_id)
+async def set_point_id(message: Message, state) -> None:
+    global input_data
+    await state.update_data(point_id=message.text)
+    groups_list = list(input_data['subgroups_dict'])
+    await message.answer(text='<b>Выберете группу приборов</b> Group ID:', parse_mode='html',
+                         reply_markup=kb.groups_kb(groups_list))
+    await WorkStates.group_id.set()
+
+@dp.message_handler(state=WorkStates.group_id)
+async def set_group_id(message: Message, state) -> None:
+    global input_data
+    await state.update_data(group_id=message.text)
+    try:
+        # заодно проверит, есть ли введенный id в подгруппе:
+        subgroups_list = list(input_data['subgroups_dict'][message.text])
+    except:
+        groups_list = list(input_data['subgroups_dict'])
+        await message.answer(text='Ошибка ввода, повторите, пожалуйста, еще раз:')
+        await message.answer(text='<b>Выберете группу приборов</b> Group ID:', parse_mode='html',
+                             reply_markup=kb.groups_kb(groups_list))
+        await WorkStates.group_id.set()
+        return
+    # продолжаем:
+    await message.answer(text='<b>Выберете подгруппу приборов</b> (SubGroup):', parse_mode='html',
+                         reply_markup=kb.subgroups_kb(subgroups_list))
+    await WorkStates.subgroup.set()
+
+@dp.message_handler(state=WorkStates.subgroup)
+async def set_subgroup(message: Message, state) -> None:
+    global input_data
+    await state.update_data(subgroup=message.text)
+    statedata = await state.get_data()
+    try:
+        complects_list = input_data['subgroups_dict'][statedata['group_id']][message.text]
+    except:
+        # еще раз на шаг назад:
+        subgroups_list = list(input_data['subgroups_dict'][statedata['group_id']])
+        await message.answer(text='Ошибка ввода, пожалуйста, повторите попытку:')
+        await message.answer(text='<b>Выберете подгруппу приборов</b> (SubGroup):', parse_mode='html',
+                             reply_markup=kb.subgroups_kb(subgroups_list))
+        await WorkStates.subgroup.set()
+        return
+    # продолжаем, если погруппа нашлась в словаре подгрупп
+    await message.answer(text='<b>Выберете устанавливаемый комплект</b> Complect ID:', parse_mode='html',
+                         reply_markup=kb.complects_kb(complects_list))
+    await WorkStates.complect.set()
+
+@dp.message_handler(state=WorkStates.complect)
+async def set_complect(message: Message, state) -> None:
+    global input_data
+    await state.update_data(complect_id=message.text)
+    sd = await state.get_data()  # sd -- state data
+    # выполняем проверки:
+    step_back: bool = False
+    # проверяем, является ли введенный текст номером комплекта:
+    complects_list = input_data['subgroups_dict'][sd['group_id']][sd['subgroup']]
+    if not message.text in complects_list:
+        await message.answer(text='Ошибка ввода, пожалуйста, повторите попытку.')
+        step_back = True
+    else:
+        # проверяем, не занят ли этот прибор кем-то другим на другой точке:
+        ds = list(db.get_complect(message.text))  # ds -- device status
+        if ds[1] != 'свободен':
+            await message.answer(text=f'Внимание: прибор {ds[0]} уже зарегистрирован на точке {ds[1]} пользователем {ds[2]} в {ds[3]}!')
+            await message.answer(text=f'Уточните, пожалуйста, данные у специалиста {ds[2]} и повторите попытку.')
+            step_back = True
+    if step_back:
+        # просим ввести еще раз, и машина состояний на шаг назад:
+        await message.answer(text='<b>Выберете устанавливаемый комплект</b> Complect ID:', parse_mode='html',
+                             reply_markup=kb.complects_kb(complects_list))
+        await WorkStates.complect.set()
+        return
+    # проверяем
+    # если все прошло успешно продолжаем заполнять:
+    datetime_start = message.date
+    lat = input_data[f'{message.from_user.id}'][0]
+    lon = input_data[f'{message.from_user.id}'][1]
+    db.set_point_start(sd['point_id'], lat, lon, sd['complect_id'], int(message.from_user.id), str(datetime_start))
+    logger.info(f'{datetime_start} начало регистрации прибора {sd["complect_id"]} на точке {sd["point_id"]} '
+                f'специалистом {message.from_user.id} @{message.from_user.username}')
+    await message.answer(text=f'Отправлено <b>{sd["point_id"]}</b> {sd["complect_id"]} {datetime_start} {lat} {lon}',
+                         parse_mode='html', reply_markup=kb.work_menu_kb)
+    await state.finish()
+
+@dp.callback_query_handler(lambda callback_query: json.loads(callback_query.data)['#'] == 'Groups')
+async def device_description(call: CallbackQuery):
+    callback_data = call.data
+    callback_data = json.loads(callback_data)
+    GroupID = str(callback_data['GroupID'])
+    device_model, description, url = utils.get_devices_description(GroupID=GroupID)
+    caption = f'<b>{device_model}</b>\n\n{description}'
+    with open(settings.device_image(device_group=GroupID), 'rb') as photo:
+        await call.message.answer_photo(photo=photo, caption=caption,
+                                        parse_mode='html', reply_markup=kb.url_kb(url))
     await call.answer()
 
 
 @dp.message_handler()
-async def all_messages(message: Message):
+async def all_messages(message: Message) -> None:
     await message.answer('Команда не распознана, для начала, пожалуйста, нажмите на /start или /menu')
 
 
 def main(skip_updates: bool = True, echo: bool = False) -> None:
     global input_data
-
     # Расположение задания и других json-данных от приложения (app)
     # передается вторым (т.е. [1]) аргументом в команде запуска бота:
     if echo:

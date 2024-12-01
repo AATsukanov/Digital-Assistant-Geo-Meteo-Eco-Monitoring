@@ -129,6 +129,9 @@ class Task:
         obj['nComplects']: int = self.nComplects
         obj['recommended_group_of_devices']: list[str] = self.recommended_group_of_devices
         obj['subgroups_dict']: dict = self.subgroups_dict
+        obj['Point_ID']: list[str] = list(self.Point_ID)
+        obj['N_WGS84']: list[str] = list(self.N_WGS84)
+        obj['E_WGS84']: list[str] = list(self.E_WGS84)
         obj['map_image']: str = self.map_image
         obj['TaskDetails']: str = self.TaskDetails
         obj['date']: str = self.date

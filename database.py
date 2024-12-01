@@ -185,7 +185,8 @@ def get_free_complects() -> str:
 def get_point(point_id: str) -> list[str]:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
-    point = cursor.execute('SELECT * FROM Points WHERE id = ?', (point_id,)).fetchone()
+    point = cursor.execute('SELECT * FROM Points WHERE PointID = ?', (point_id,)).fetchone()
+    point = list(point)
     connection.close()
     return point
 
@@ -193,7 +194,8 @@ def get_point(point_id: str) -> list[str]:
 def get_complect(complect_id: str) -> list[str]:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
-    complect = cursor.execute('SELECT * FROM Devices WHERE id = ?', (complect_id,)).fetchone()
+    complect = cursor.execute('SELECT * FROM Devices WHERE ComplectID = ?', (complect_id,)).fetchone()
+    complect = list(complect)
     connection.close()
     return complect
 
@@ -203,8 +205,8 @@ def set_point_start(point_id: str, lat_fact: float, lon_fact: float,
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
 
-    pid_check = cursor.execute('SELECT * FROM Points WHERE id=?', (point_id,))
-    cid_check = cursor.execute('SELECT * FROM Devices WHERE id=?', (complect_id,))
+    pid_check = cursor.execute('SELECT * FROM Points WHERE PointID=?', (point_id,))
+    cid_check = cursor.execute('SELECT * FROM Devices WHERE ComplectID=?', (complect_id,))
     if pid_check.fetchone() is None:
         connection.close()
         return f'Извините, точка {point_id} в базе не найдена, или отсутствует подключение.'
@@ -215,10 +217,10 @@ def set_point_start(point_id: str, lat_fact: float, lon_fact: float,
     try:
         # Запись: в Таблицу Points
         cursor.execute('UPDATE Points SET '
-                       '(ComplectID, datetime_start, N_WGS84_fact, E_WGS84_fact) = (?, ?, ?, ?) WHERE id = ?',
+                       '(ComplectID, datetime_start, N_WGS84_fact, E_WGS84_fact) = (?, ?, ?, ?) WHERE PointID = ?',
                        (complect_id, str(datetime_start), lat_fact, lon_fact, point_id))
         # Запись: в Таблицу Devices // # <ComplectID> is <busy> at <PointID> by <UserID> since <datetime_start>
-        cursor.execute('UPDATE Devices SET (status, PointID, UserID, datetime_start) = (?, ?, ?, ?) WHERE id = ?',
+        cursor.execute('UPDATE Devices SET (status, PointID, UserID, datetime_start) = (?, ?, ?, ?) WHERE ComplectID = ?',
                        ('установлен', point_id, user_id, str(datetime_start), complect_id))
     except sqlite3.DatabaseError as exc:
         connection.close()
@@ -233,14 +235,14 @@ def set_point_end(point_id: str, user_id: int, datetime_end: str) -> str:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
 
-    pid_check = cursor.execute('SELECT * FROM Points WHERE id=?', (point_id,))
+    pid_check = cursor.execute('SELECT * FROM Points WHERE PointID=?', (point_id,))
     if pid_check.fetchone() is None:
         connection.close()
         return f'Извините, точка {point_id} в базе не найдена, или отсутствует подключение.'
 
     try:
         cursor.execute(
-            'UPDATE Points SET (datetime_end, Comments) = (?, ?) WHERE id = ?',
+            'UPDATE Points SET (datetime_end, Comments) = (?, ?) WHERE PointID = ?',
             (str(datetime_end), f'снял: {user_id}', point_id))
     except sqlite3.DatabaseError as exc:
         connection.close()

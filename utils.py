@@ -19,5 +19,13 @@ def get_devices_description(GroupID: str) -> tuple[str, str, str]:
     # выбираем только строку с нужным GroupID:
     df = df[df['GroupID'] == GroupID]
 
-    return df['DeviceModel'], df['Description'], df['URL']
+    DeviceModel = list(df['DeviceModel'])[0]
+    Description = list(df['Description'])[0]
+    url = list(df['URL'])[0]
 
+    return DeviceModel, Description, url
+
+if __name__ == '__main__':
+    for j, gid in enumerate(settings.devices_groups):
+        dm, desc, url = get_devices_description(gid)
+        print(f'{j}:\t{gid}\t{dm}\t{desc}\t{url}')

@@ -234,6 +234,8 @@ class App(tk.Tk):
         # Упаковываем в json:
         self.exchange_data_json = settings.fparams_json.replace("$REPLACE=TODAY$", self.task.date)  # обновляем дату
         self.task.save_as_json(fname=self.exchange_data_json)
+        tkmb.showinfo(parent=self, title='Создание полевого задания',
+                      message=f'Полевое задание создано, параметры сохранены, теперь можно запустить telegram-бота!')
         return True
 
     def check_devices_groups(self, recommended_group_of_devices: list[str]) -> bool:

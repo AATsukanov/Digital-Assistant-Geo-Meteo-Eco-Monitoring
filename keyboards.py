@@ -5,7 +5,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 import settings
 from earth import Earth
-from settings import devices_GroupID_kb_layout
+from settings import devices_GroupID_kb_layout, max_kb_buttons_in_row
 
 start_kb = ReplyKeyboardMarkup(
     keyboard=[
@@ -63,7 +63,7 @@ help_kb = InlineKeyboardMarkup(
 )
 
 
-def all_groups_kb():
+def all_groups_kb() -> InlineKeyboardMarkup:
     inline_kb = InlineKeyboardMarkup(resize_keyboard=True)
     for gid in settings.devices_groups:
         inline_kb.insert(InlineKeyboardButton(text=f'{gid}',
@@ -71,8 +71,64 @@ def all_groups_kb():
     return inline_kb
 
 
-def url_kb(url: str):
-    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='перейти', url=url)]], resize_keyboard=True)
+def groups_kb(groups_list: list[str]) -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    for gid in groups_list:
+        kb.insert(KeyboardButton(text=gid))
+    return kb
+
+
+def subgroups_kb(subgroups_list: list[str]) -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    for sub in subgroups_list:
+        kb.insert(KeyboardButton(text=sub))
+    return kb
+
+
+def complects_new_kb(complects_list: list[str]) -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    row = []
+    for cid in list(complects_list):
+        row.append(KeyboardButton(text=cid))
+        if len(row) % max_kb_buttons_in_row == 0:
+            kb.row(row)
+            row = []
+    # оставшиеся:
+    if len(row) > 0:
+        kb.row(row)
+    return kb
+
+
+def complects_kb(complects_list: list[str]) -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    for cid in complects_list:
+        kb.insert(KeyboardButton(text=cid))
+    return kb
+
+
+def points_kb(points_list: list[str]) -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    for pid in points_list:
+        kb.insert(KeyboardButton(text=pid))
+    return kb
+
+def points_adpt_kb(points_list: list[str]) -> ReplyKeyboardMarkup:
+    kb = ReplyKeyboardMarkup(resize_keyboard=True)
+    row = []
+    for pid in points_list:
+        row.append(KeyboardButton(text=pid))
+        if len(row) % max_kb_buttons_in_row == 0:
+            kb.row(row)
+            row = []
+    # оставшиеся:
+    if len(row) > 0:
+        kb.row(row)
+    return kb
+
+
+def url_kb(url: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text='перейти на сайт производителя', url=url)]],
+                                resize_keyboard=True)
 
 
 def make_map_kb(lat: float, lon: float, reg_loc_button: dict) -> InlineKeyboardMarkup:
