@@ -214,7 +214,7 @@ class App(tk.Tk):
         # Complect ID комплекты приборов:
         #  - сначала загружаем таблицу со всеми комплектами приборов:
         tkmb.showinfo(parent=self, title='Создание задания',
-                      message='Выберете файл с Таблицей комплектов приборов (ComplectID) и загрузите его.')
+                      message='Выберите файл с Таблицей комплектов приборов (ComplectID) и загрузите его.')
         fname = tkfd.askopenfilename(filetypes=[('Таблица комплектов приборов', '*.xlsx'), ('Все файлы', '*.*')])
         self.task.load_table_of_complects(fname)
 

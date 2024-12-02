@@ -206,7 +206,7 @@ async def devices_base(message: Message):
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
-    await message.answer('Выберете тип прибора по GroupID:', reply_markup=kb.all_groups_kb())
+    await message.answer('Выберите тип прибора по GroupID:', reply_markup=kb.all_groups_kb())
 
 
 @dp.message_handler(text='Начать работу >')
@@ -416,7 +416,7 @@ async def point_coordinates(call: CallbackQuery) -> None:
     lon = callback_data['lon']
     input_data[f'{call.from_user.id}']: list[float] = [lat, lon]
     await call.message.answer(text=f'Координаты постановки <b>{lat}, {lon}</b> - зарегистрированы!', parse_mode='html')
-    await call.message.answer(text='<b>Выберете имя точки установки:</b>', parse_mode='html',
+    await call.message.answer(text='<b>Выберите имя точки установки:</b>', parse_mode='html',
                               reply_markup=kb.points_kb(input_data['Point_ID']))
     await call.answer()
     await WorkStates.point_id.set()
@@ -427,7 +427,7 @@ async def set_point_id(message: Message, state) -> None:
     global input_data
     await state.update_data(point_id=message.text)
     groups_list = list(input_data['subgroups_dict'])
-    await message.answer(text='<b>Выберете группу приборов</b> Group ID:', parse_mode='html',
+    await message.answer(text='<b>Выберите группу приборов</b> Group ID:', parse_mode='html',
                          reply_markup=kb.groups_kb(groups_list))
     await WorkStates.group_id.set()
 
@@ -442,12 +442,12 @@ async def set_group_id(message: Message, state) -> None:
     except:
         groups_list = list(input_data['subgroups_dict'])
         await message.answer(text='Ошибка ввода, повторите, пожалуйста, еще раз:')
-        await message.answer(text='<b>Выберете группу приборов</b> Group ID:', parse_mode='html',
+        await message.answer(text='<b>Выберите группу приборов</b> Group ID:', parse_mode='html',
                              reply_markup=kb.groups_kb(groups_list))
         await WorkStates.group_id.set()
         return
     # продолжаем:
-    await message.answer(text='<b>Выберете подгруппу приборов</b> (SubGroup):', parse_mode='html',
+    await message.answer(text='<b>Выберите подгруппу приборов</b> (SubGroup):', parse_mode='html',
                          reply_markup=kb.subgroups_kb(subgroups_list))
     await WorkStates.subgroup.set()
 
@@ -463,12 +463,12 @@ async def set_subgroup(message: Message, state) -> None:
         # еще раз на шаг назад:
         subgroups_list = list(input_data['subgroups_dict'][statedata['group_id']])
         await message.answer(text='Ошибка ввода, пожалуйста, повторите попытку:')
-        await message.answer(text='<b>Выберете подгруппу приборов</b> (SubGroup):', parse_mode='html',
+        await message.answer(text='<b>Выберите подгруппу приборов</b> (SubGroup):', parse_mode='html',
                              reply_markup=kb.subgroups_kb(subgroups_list))
         await WorkStates.subgroup.set()
         return
     # продолжаем, если погруппа нашлась в словаре подгрупп
-    await message.answer(text='<b>Выберете устанавливаемый комплект</b> Complect ID:', parse_mode='html',
+    await message.answer(text='<b>Выберите устанавливаемый комплект</b> Complect ID:', parse_mode='html',
                          reply_markup=kb.complects_kb(complects_list))
     await WorkStates.complect.set()
 
@@ -495,7 +495,7 @@ async def set_complect(message: Message, state) -> None:
             step_back = True
     if step_back:
         # просим ввести еще раз, и машина состояний на шаг назад:
-        await message.answer(text='<b>Выберете устанавливаемый комплект</b> Complect ID:', parse_mode='html',
+        await message.answer(text='<b>Выберите устанавливаемый комплект</b> Complect ID:', parse_mode='html',
                              reply_markup=kb.complects_kb(complects_list))
         await WorkStates.complect.set()
         return
@@ -517,7 +517,7 @@ async def pick_device_up(message: Message) -> None:
     if db.user_started_work(message.from_id) == 0:
         await message.answer(text='Ваш пользователь не отмечен в поле.\nПожалуйста, нажмите "Начать работу".')
         return
-    await message.answer(text='<b>Выберете имя точки, на которой завершаете рагистрацию:</b>', parse_mode='html',
+    await message.answer(text='<b>Выберите имя точки, на которой завершаете рагистрацию:</b>', parse_mode='html',
                          reply_markup=kb.points_kb(input_data['Point_ID']))
     await EndStates.pickup_point_id.set()
 
