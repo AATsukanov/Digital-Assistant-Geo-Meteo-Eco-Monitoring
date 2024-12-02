@@ -14,6 +14,7 @@ import settings
 from datatypes import Task
 from earth import StaticEarth
 import database as db
+import docs
 
 def onewtreadecorator(func):
     '''Декорируем функции, которые хотим запустить в параллельном потоке'''
@@ -100,6 +101,7 @@ class App(tk.Tk):
 
         # Menu->About:
         self.menu_about = tk.Menu(self.MenuBar, tearoff=0)
+        self.menu_about.add_command(label='Помощь', command=self.on_help)
         self.menu_about.add_command(label='Контакты', command=self.on_contacts)
         self.menu_about.add_command(label='О версии...', command=self.on_about)
         self.MenuBar.add_cascade(label='О программе', menu=self.menu_about)
@@ -326,6 +328,11 @@ class App(tk.Tk):
         # Выводит изображение из файла на "холст":
         self.photo_image = tk.PhotoImage(file=fname)
         self.canvas.itemconfigure(self.img_tag, image=self.photo_image)
+
+
+    def on_help(self):
+        tkmb.showinfo(title='Описание хода работ при использовании программы',
+                      message=docs.instruction_ru)
 
     def on_contacts(self):
         tkmb.showinfo(title='Контакты разработчика...',
