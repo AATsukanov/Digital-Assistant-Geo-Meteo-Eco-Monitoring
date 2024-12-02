@@ -49,7 +49,111 @@
 
 ## Реализация
 ### структура проекта
+![структура папок проекта](https://github.com/user-attachments/assets/2946d074-9c95-4a94-a0d8-4d296b4730b0)
 
 
 
-## Пример работы
+## Работа с tkinter-модулем приложения "Цифровой ассистент системы геомониторнга"
+
+### Работа с основным функционалом на примере проекта "10 вершин Кавказских гор"
+
+![01](https://github.com/user-attachments/assets/0d69b340-7787-408a-a643-389338727f15)
+
+***Рис.1.***
+
+Начальное (основное) окно *desktop*-модуля программы "Цифровой ассистент системы геомониторнга" версии 0.0.1 показано на ***Рис.1***. 
+Для демнстрации работы с программой был сделан тестовый проект *"10 вершин Кавказских гор"*. 
+Исходные данные представляют собой таблицу, содержащую 10 точек в координатной системе WGS84 с формальными именами точек P01, ..., P10 
+(каждая точка соответствует положению одного из пиков Кавказа из списка топ-10 по высоте).
+Далее будем назвать эту таблицу *таблицей точек*.
+
+![02](https://github.com/user-attachments/assets/44c86136-4f68-407c-bbc4-2880cf4e5d3d)
+
+***Рис.2.***
+
+Для загрузки 
+
+![03](https://github.com/user-attachments/assets/3d3a5715-6406-4f23-85e0-0600219d5d37)
+
+***Рис.3.***
+
+
+![04](https://github.com/user-attachments/assets/f3adaf88-544f-4dcf-83ba-4667c7879b55)
+
+***Рис.4.***
+
+
+![05](https://github.com/user-attachments/assets/bbf5cbcb-cde4-47ad-84f8-afd1266486c8)
+
+***Рис.5.***
+
+
+![06](https://github.com/user-attachments/assets/e65e06d6-0e4e-4197-98c3-b6e032078292)
+
+***Рис.6.***
+
+
+![07](https://github.com/user-attachments/assets/5a7788f3-cc6c-4512-afe9-6c182f4a568e)
+
+***Рис.7.***
+
+
+![08](https://github.com/user-attachments/assets/eba70359-6113-47c6-b1a5-770a4c49e960)
+
+***Рис.8.***
+
+
+![09](https://github.com/user-attachments/assets/bd7c64f3-3bb3-4071-b249-6d097e31934e)
+
+***Рис.9.***
+
+
+![10](https://github.com/user-attachments/assets/85aa92f5-3021-4ef9-b6e2-e48f257dee03)
+
+***Рис.10.***
+
+
+
+![11](https://github.com/user-attachments/assets/8b4361e8-d51c-4bf8-9ff0-c79d86017e87)
+
+***Рис.11.***
+
+
+
+![12](https://github.com/user-attachments/assets/a60bfb00-8aef-4bfe-a586-9c718c0394c6)
+
+***Рис.12.***
+
+
+
+![13](https://github.com/user-attachments/assets/beac653e-a00b-499e-bfb7-6deea9bf2a3f)
+
+***Рис.13.***
+
+
+
+### Второстепенные пункты меню программы
+![A1](https://github.com/user-attachments/assets/5440f0dc-9cae-4152-bc6e-36ae6c97f310)
+
+***Рис.П1.***
+
+
+![A2](https://github.com/user-attachments/assets/9006d253-124d-4aea-8a02-271bc8a8e6d5)
+
+***Рис.П2.***
+
+
+![A3](https://github.com/user-attachments/assets/ebaf3075-944d-43da-ab06-1fd17943e679)
+
+***Рис.П3.***
+
+
+![A4](https://github.com/user-attachments/assets/84e06f85-240f-4fd4-9619-a7efcb3c800a)
+
+***Рис.П4.***
+
+
+
+
+## Пример работы с telegram-ботом пакета "Цифровой ассистент системы геомониторнга"
+
