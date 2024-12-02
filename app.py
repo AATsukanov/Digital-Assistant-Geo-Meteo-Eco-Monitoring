@@ -84,8 +84,12 @@ class App(tk.Tk):
         self.menu_db.add_command(label='Инициализация users.db: Users, Admins', command=self.on_db_init_users)
         self.menu_db.add_command(label='Инициализация project.db: Points, Devices', command=self.on_db_init_project)
         self.menu_db.add_separator()
-        self.menu_db.add_command(label='Заполнение Points в project.db', command=self.on_fill_point_in_project_db)
-        self.menu_db.add_command(label='Заполнение Devices в project.db', command=self.on_fill_devices_in_project_db)
+        self.menu_db.add_command(label='Перезаполненить Points в project.db', command=self.on_refill_point_in_project_db)
+        self.menu_db.add_command(label='Перезаполненить Devices в project.db', command=self.on_refill_devices_in_project_db)
+        self.menu_db.add_separator()
+        self.menu_db.add_command(label='Очистить таблицу Points в project.db', command=self.on_clear_point_in_project_db)
+        self.menu_db.add_command(label='Очистить таблицу Devices в project.db',
+                                 command=self.on_clear_devices_in_project_db)
         self.MenuBar.add_cascade(label='Управление БД', menu=self.menu_db)
 
         # Menu->Настройки:
@@ -137,9 +141,9 @@ class App(tk.Tk):
         pass
 
 
-    def on_fill_point_in_project_db(self) -> bool:
+    def on_refill_point_in_project_db(self) -> bool:
         if self.task.nPoints > 0:
-            db.fill_points(
+            db.refill_points(
                 PointsID=list(self.task.Point_ID),
                 N_WGS84=list(self.task.N_WGS84),
                 E_WGS84=list(self.task.E_WGS84)
@@ -151,15 +155,31 @@ class App(tk.Tk):
                       message='Точки не загружены, пожалуйста, загрузите проект/задание.')
         return False
 
-    def on_fill_devices_in_project_db(self) -> bool:
+    def on_clear_point_in_project_db(self) -> None:
+        if os.path.isfile('databases/project.db'):
+            db.clear_points()
+            print('ИНФО: таблица точек в базе данных очищена')
+        else:
+            print('ИНФО: таблица Points в базе данных не найдена')
+
+
+    def on_refill_devices_in_project_db(self) -> bool:
         if self.task.nComplects > 0:
-            db.fill_complects(ComplectsID=list(self.task.df_of_complects["ComplectID"]))
+            db.refill_complects(ComplectsID=list(self.task.df_of_complects["ComplectID"]))
             print(f'ИНФО: в таблицу Devices (project.db) записаны {self.task.nComplects} '
                   'названий комплектов, пожалуйста, проверьте БД.')
             return True
         tkmb.showinfo(title='Заполнение таблицы Devices в project.db:',
                       message='Таблица комплектов не загружена, пожалуйста, создайте задание.')
         return False
+
+
+    def on_clear_devices_in_project_db(self) -> None:
+        if os.path.isfile('databases/project.db'):
+            db.clear_complects()
+            print('ИНФО: таблица приборов в базе данных очищена')
+        else:
+            print('ИНФО: таблица Devices в базе данных не найдена')
 
 
     def on_create_task(self, write_subgroups_to_excel=False, echo=True) -> bool:
@@ -214,7 +234,7 @@ class App(tk.Tk):
         if echo:
             print('Создан словарь подгрупп приборов.')
 
-        # сохраняем в excel:
+        # сохраняем в excel опционально:
         if write_subgroups_to_excel:
             fname = f'_temp_subgroups-of-complects.{today}.xlsx'
             Writer = pd.ExcelWriter(os.path.join(settings.tables_dir, fname))
@@ -227,6 +247,10 @@ class App(tk.Tk):
                                                       'особенности проведения полевых работ можно указать здесь '
                                                       '(в свободной форме) для полевых специалистов:',
                                                initialvalue='Дипломный проект для Urban University (А.Цуканов, 2024)')
+
+        # освежаем базу данных с проектным заданием:
+        self.on_refill_point_in_project_db()
+        self.on_refill_devices_in_project_db()
 
         # Дата формирования задания (тип str):
         self.task.date = str(datetime.date.today())

@@ -100,6 +100,40 @@ def fill_complects(ComplectsID: list[str]) -> None:
     connection.close()
 
 
+def clear_points() -> None:
+    # очищает таблицу со списком приборов, взятых в поле на текущее задание:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+
+    cursor.execute('DELETE FROM Points')
+
+    connection.commit()
+    connection.close()
+
+
+def refill_points(PointsID: list[str], N_WGS84: list[str], E_WGS84: list[str]) -> None:
+    # очищает и заново заполняет:
+    clear_points()
+    fill_points(PointsID, N_WGS84, E_WGS84)
+
+
+def clear_complects() -> None:
+    # очищает таблицу со списком приборов, взятых в поле на текущее задание:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+
+    cursor.execute('DELETE FROM Devices')
+
+    connection.commit()
+    connection.close()
+
+
+def refill_complects(ComplectsID: list[str]) -> None:
+    # очищает и заново заполняет:
+    clear_complects()
+    fill_complects(ComplectsID)
+
+
 def get_points_started() -> str:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
@@ -117,6 +151,7 @@ def get_points_started() -> str:
 
     connection.close()
     return msg
+
 
 def get_points_rest() -> str:
     connection = sqlite3.connect('databases/project.db')
@@ -168,10 +203,10 @@ def get_free_complects() -> str:
         return f'Извините, возникла ошибка при работе с БД:\n{exc}'
     selected = list(selected)
     if len(selected) > 0:
-        msg = 'Свободные комплекты: '
+        msg = ''
         for j, cid in enumerate(selected[:-1]):
             if j < settings.bot_max_show_complects:
-                msg += f'{cid[0]}, '
+                msg += f'{cid[0]},  '
             else:
                 msg += '..., '
                 break
@@ -213,8 +248,8 @@ def set_point_start(point_id: str, lat_fact: float, lon_fact: float,
     try:
         # Запись: в Таблицу Points
         cursor.execute('UPDATE Points SET '
-                       '(ComplectID, datetime_start, N_WGS84_fact, E_WGS84_fact) = (?, ?, ?, ?) WHERE PointID = ?',
-                       (complect_id, str(datetime_start), lat_fact, lon_fact, point_id))
+                       '(ComplectID, datetime_start, N_WGS84_fact, E_WGS84_fact, Comments) = (?, ?, ?, ?, ?) WHERE PointID = ?',
+                       (complect_id, str(datetime_start), lat_fact, lon_fact, str(user_id), point_id))
     except sqlite3.DatabaseError as exc:
         connection.close()
         return f'Извините, возникла ошибка при работе с базой данных точек проекта:\n{exc}'

@@ -36,6 +36,10 @@ class WorkStates(StatesGroup):
     complect = State()
 
 
+class EndStates(StatesGroup):
+    pickup_point_id = State()
+
+
 class UserStates(StatesGroup):
     update_user_param = State()
 
@@ -57,7 +61,8 @@ async def on_startup(dispatcher: Dispatcher) -> None:
 
 @dp.message_handler(commands=['start'])
 async def start(message: Message):
-    info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} (@{message.from_user.username}) подключился {message.date}'
+    info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} '\
+           f'(@{message.from_user.username}) подключился {message.date}'
     logger.info(info)
     # Проверяем пользователя в users.db и добавляем его открытые данные, если его нет:
     greeting_name = 'уважаемый пользователь'
@@ -238,7 +243,7 @@ async def project_points_started(call: CallbackQuery):
     text = db.get_points_started()
     if text == '':
         text = 'нет точек с установленным оборудованием'
-    await call.message.answer(text=f'<b>Оставшиеся точки для постановки:</b>\n\n{text}',
+    await call.message.answer(text=f'<b>Проектные точки с приборами:</b>\n\n{text}',
                               parse_mode='html', reply_markup=kb.field_info_kb)
     await call.answer()
 
@@ -480,8 +485,9 @@ async def set_complect(message: Message, state) -> None:
         # проверяем, не занят ли этот прибор кем-то другим на другой точке:
         ds = list(db.get_complect(message.text))  # ds -- device status
         if ds[1] != 'свободен':
-            await message.answer(text=f'Внимание: прибор {ds[0]} уже зарегистрирован на точке {ds[1]} пользователем {ds[2]} в {ds[3]}!')
-            await message.answer(text=f'Уточните, пожалуйста, данные у специалиста {ds[2]} и повторите попытку.')
+            await message.answer(text=f'Внимание: прибор {ds[0]} уже зарегистрирован '
+                                      f'на точке {ds[2]} пользователем с ID {ds[3]} в {ds[4]}!')
+            await message.answer(text=f'Уточните, пожалуйста, данные у специалиста с ID {ds[3]} и повторите попытку.')
             step_back = True
     if step_back:
         # просим ввести еще раз, и машина состояний на шаг назад:
