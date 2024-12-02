@@ -18,15 +18,17 @@ import settings
 import datatypes
 import keyboards as kb
 import database as db
-from datatypes import User, Admin, user_changeable_columns
-import docs, utils
+from datatypes import User, Admin
+import docs
+import utils
 from logger import logger
 
 bot = Bot(token=config.token)
 dp = Dispatcher(bot=bot, storage=MemoryStorage())
 
 input_data: dict = {}  # параметры задания и другие входные данные (json) от основного приложения (app)
-reg_loc_button: dict = {'visible': False, 'label': ''}  # динамические настройки кнопки регистрации геолокации точки
+# динамическая настройка видимости кнопки регистрации геолокации точки:
+reg_loc_button: dict = {(0, 'visible'): False, (0, 'label'): ''}
 
 
 class WorkStates(StatesGroup):
@@ -75,7 +77,7 @@ async def start(message: Message):
     else:
         greeting_name = db.get_greeting_name(user_id=message.from_id)
     global reg_loc_button
-    reg_loc_button['visible'] = False  # для start_kb reg_loc_button - invisible
+    reg_loc_button[(message.from_id, 'visible')] = False  # для start_kb reg_loc_button - invisible
     with open(config.welcome_img, 'rb') as img:
         await message.answer_photo(photo=img, caption=f'Здравствуйте, {greeting_name}', reply_markup=kb.start_kb)
 
@@ -85,7 +87,7 @@ async def start(message: Message):
 async def back_start_menu(message: Message):
     global reg_loc_button
     # для start_kb reg_loc_button - invisible:
-    reg_loc_button['visible'] = False
+    reg_loc_button[(message.from_id, 'visible')] = False
     await message.answer('Клавиатура начального меню:', reply_markup=kb.start_kb)
 
 
@@ -99,11 +101,15 @@ async def back_user_profile(call: CallbackQuery):
 async def check_location(message: Message):
     global reg_loc_button
     if db.user_started_work(message.from_id) == 0:
-        reg_loc_button['visible'] = False
+        reg_loc_button[(message.from_id, 'visible')] = False
     lat, lon = message.location['latitude'], message.location['longitude']
     logger.info(f'{message.date} Проверка геопозиции @{message.from_user.username} ({message.from_id}): {lat}, {lon}')
+    visible = reg_loc_button.get((message.from_id, 'visible'), False)
+    label = reg_loc_button.get((message.from_id, 'label'), '')
     await message.answer(text=f'Ваши координаты (LAT, LON): {lat}, {lon}',
-                         reply_markup=kb.make_map_kb(lat, lon, reg_loc_button))
+                         reply_markup=kb.make_map_kb(lat, lon,
+                                                     reg_loc_button_visible=visible,
+                                                     reg_loc_button_label=label))
 
 
 @dp.message_handler(text='Свой профиль')
@@ -133,7 +139,7 @@ async def update_user_by_user(call: CallbackQuery):
 
 
 @dp.message_handler(state=UserStates.update_user_param)
-async def update_user_param(message: Message, state: State) -> None:
+async def update_user_param(message: Message, state) -> None:
     text = message.text
     if len(text.split(' ')) != 2:
         await message.answer('Неверный формат', reply_markup=kb.user_profile_kb)
@@ -186,7 +192,7 @@ async def support_contacts(call: CallbackQuery):
 async def open_task(message: Message):
     global input_data
     global reg_loc_button  # для start_kb reg_loc_button - invisible:
-    reg_loc_button['visible'] = False
+    reg_loc_button[(message.from_id, 'visible')] = False
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
@@ -215,8 +221,8 @@ async def start_work(message: Message):
         return
     db.user_started_work(message.from_id)
     global reg_loc_button
-    reg_loc_button['visible'] = True
-    reg_loc_button['label'] = 'Зарегистрировать точку'
+    reg_loc_button[(message.from_id, 'visible')] = True
+    reg_loc_button[(message.from_id, 'label')] = 'Зарегистрировать точку'
     await message.answer(text='Приступить к полевым работам', reply_markup=kb.work_menu_kb)
 
 
@@ -277,7 +283,7 @@ async def users_in_the_field(call: CallbackQuery):
 @dp.message_handler(commands=['end'])
 async def end(message: Message):
     global reg_loc_button
-    reg_loc_button['visible'] = False
+    reg_loc_button[(message.from_id, 'visible')] = False
     info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} '\
            f'(@{message.from_user.username}, {message.from_id}) нажал "/end"'
     logger.info(info)
@@ -291,7 +297,7 @@ async def end(message: Message):
 @dp.message_handler(commands=['rm'])
 async def rm_command(message: types.Message):
     global reg_loc_button
-    reg_loc_button['visible'] = False
+    reg_loc_button[(message.from_id, 'visible')] = False
     await message.reply(r'очистить клавиатуру /rm', reply_markup=types.ReplyKeyboardRemove())
 
 
@@ -309,7 +315,7 @@ async def back_admin_panel(call: CallbackQuery):
         await call.message.answer('Панель управления', reply_markup=kb.admin_kb)
     else:
         global reg_loc_button
-        reg_loc_button['visible'] = False
+        reg_loc_button[(call.message.from_id, 'visible')] = False
         await call.message.answer('Главное меню', reply_markup=kb.start_kb)
     await call.answer()
 
@@ -430,6 +436,7 @@ async def set_point_id(message: Message, state) -> None:
                          reply_markup=kb.groups_kb(groups_list))
     await WorkStates.group_id.set()
 
+
 @dp.message_handler(state=WorkStates.group_id)
 async def set_group_id(message: Message, state) -> None:
     global input_data
@@ -448,6 +455,7 @@ async def set_group_id(message: Message, state) -> None:
     await message.answer(text='<b>Выберете подгруппу приборов</b> (SubGroup):', parse_mode='html',
                          reply_markup=kb.subgroups_kb(subgroups_list))
     await WorkStates.subgroup.set()
+
 
 @dp.message_handler(state=WorkStates.subgroup)
 async def set_subgroup(message: Message, state) -> None:
@@ -468,6 +476,7 @@ async def set_subgroup(message: Message, state) -> None:
     await message.answer(text='<b>Выберете устанавливаемый комплект</b> Complect ID:', parse_mode='html',
                          reply_markup=kb.complects_kb(complects_list))
     await WorkStates.complect.set()
+
 
 @dp.message_handler(state=WorkStates.complect)
 async def set_complect(message: Message, state) -> None:
@@ -506,6 +515,34 @@ async def set_complect(message: Message, state) -> None:
     await message.answer(text=f'Отправлено <b>{sd["point_id"]}</b> {sd["complect_id"]} {datetime_start} {lat} {lon}',
                          parse_mode='html', reply_markup=kb.work_menu_kb)
     await state.finish()
+
+
+@dp.message_handler(text='Снять прибор')
+async def pick_device_up(message: Message) -> None:
+    if db.user_started_work(message.from_id) == 0:
+        await message.answer(text='Ваш пользователь не отмечен в поле.\nПожалуйста, нажмите "Начать работу".')
+        return
+    await message.answer(text='<b>Выберете имя точки, на которой завершаете рагистрацию:</b>', parse_mode='html',
+                         reply_markup=kb.points_kb(input_data['Point_ID']))
+    await EndStates.pickup_point_id.set()
+
+
+@dp.message_handler(state=EndStates.pickup_point_id)
+async def pick_device_up_from_point(message: Message, state) -> None:
+    await state.update_data(pickup_point_id=message.text)
+    sd = await state.get_data()  # sd -- state data
+    datetime_end = str(message.date)
+    # записываем отметку об окончании регистрации в db:
+    answer = db.set_point_end(point_id=sd['pickup_point_id'], datetime_end=datetime_end)
+    await message.answer(text=answer)
+
+    # и отмечаем, что прибор свободен:
+    pickup_point = db.get_point(sd['pickup_point_id'])
+    complect_id = pickup_point[1]
+    answer = db.set_complect_free(complect_id=complect_id)
+    await message.answer(text=answer)
+    await state.finish()
+
 
 @dp.callback_query_handler(lambda callback_query: json.loads(callback_query.data)['#'] == 'Groups')
 async def device_description(call: CallbackQuery):

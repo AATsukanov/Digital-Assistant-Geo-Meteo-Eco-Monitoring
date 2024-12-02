@@ -131,7 +131,8 @@ def url_kb(url: str) -> InlineKeyboardMarkup:
                                 resize_keyboard=True)
 
 
-def make_map_kb(lat: float, lon: float, reg_loc_button: dict) -> InlineKeyboardMarkup:
+def make_map_kb(lat: float, lon: float,
+                reg_loc_button_visible: bool=False, reg_loc_button_label: str = '') -> InlineKeyboardMarkup:
     inline_kb = InlineKeyboardMarkup()
     b11 = InlineKeyboardButton(text='Яндекс карта',
                                url=Earth.make_maps_yandex_url(lat, lon, settings.maps_zoom['yandex']))
@@ -143,18 +144,18 @@ def make_map_kb(lat: float, lon: float, reg_loc_button: dict) -> InlineKeyboardM
                                url=Earth.make_maps_nakarte_url(lat, lon, settings.maps_zoom['nakarte']))
     inline_kb.row(b11, b12)
     inline_kb.row(b21, b22)
-    if reg_loc_button['visible']:
-        b3 = InlineKeyboardButton(text=reg_loc_button['label'],
+    if reg_loc_button_visible:
+        b3 = InlineKeyboardButton(text=reg_loc_button_label,
                                   callback_data=json.dumps({'#': 'Setup', 'lat': lat, 'lon': lon}))
         inline_kb.row(b3)
     return inline_kb
 
 field_info_kb = InlineKeyboardMarkup(
     inline_keyboard=[
-        [InlineKeyboardButton(text='Проектные точки (актуальные)', callback_data='project_points_rest')],
-        [InlineKeyboardButton(text='Комплекты приборов (свободные)', callback_data='project_devices_free')],
+        [InlineKeyboardButton(text='Проектные точки (оставшиеся)', callback_data='project_points_rest')],
         [InlineKeyboardButton(text='Проектные точки (с приборами)', callback_data='project_points_started')],
         [InlineKeyboardButton(text='Комплекты приборов (на точках)', callback_data='project_devices_busy')],
+        [InlineKeyboardButton(text='Список свободных приборов', callback_data='project_devices_free')],
         [InlineKeyboardButton(text='Полевой отряд (кто с Вами в поле)', callback_data='users_in_the_field')]
     ], resize_keyboard=True
 )

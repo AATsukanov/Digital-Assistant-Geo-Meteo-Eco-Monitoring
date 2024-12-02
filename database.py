@@ -274,7 +274,7 @@ def set_point_start(point_id: str, lat_fact: float, lon_fact: float,
     return f'Прибор {complect_id} в точке {point_id} установлен.'
 
 
-def set_point_end(point_id: str, user_id: int, datetime_end: str) -> str:
+def set_point_end(point_id: str, datetime_end: str) -> str:
     connection = sqlite3.connect('databases/project.db')
     cursor = connection.cursor()
 
@@ -282,11 +282,10 @@ def set_point_end(point_id: str, user_id: int, datetime_end: str) -> str:
     if pid_check.fetchone() is None:
         connection.close()
         return f'Извините, точка {point_id} в базе не найдена, или отсутствует подключение.'
-
     try:
         cursor.execute(
-            'UPDATE Points SET (datetime_end, Comments) = (?, ?) WHERE PointID = ?',
-            (str(datetime_end), f'снял: {user_id}', point_id))
+            'UPDATE Points SET datetime_end = ? WHERE PointID = ?',
+            (str(datetime_end), point_id))
     except sqlite3.DatabaseError as exc:
         connection.close()
         return f'Извините, возникла ошибка при работе с БД:\n{exc}'
@@ -294,6 +293,27 @@ def set_point_end(point_id: str, user_id: int, datetime_end: str) -> str:
     connection.commit()
     connection.close()
     return f'Регистрация в точке {point_id} завершена.'
+
+
+def set_complect_free(complect_id: str) -> str:
+    connection = sqlite3.connect('databases/project.db')
+    cursor = connection.cursor()
+
+    cid = cursor.execute('SELECT * FROM Devices WHERE ComplectID=?', (complect_id,))
+    if cid.fetchone() is None:
+        connection.close()
+        return f'Извините, прибор {complect_id} в базе не найден, или отсутствует подключение.'
+    try:
+        cursor.execute(
+            'UPDATE Devices SET status = ? WHERE ComplectID = ?',
+            ('свободен', complect_id))
+    except sqlite3.DatabaseError as exc:
+        connection.close()
+        return f'Извините, возникла ошибка при работе с БД:\n{exc}'
+
+    connection.commit()
+    connection.close()
+    return f'Принято: прибор {complect_id} отмечен как свободный.'
 
 
 '''Далее блок CRUD-функций для Users и Admins
