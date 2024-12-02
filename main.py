@@ -1,14 +1,9 @@
-# ставим python 3.9
-# ставим aiogram 2.25.2
-
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher import FSMContext
+#from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery
-import asyncio
-import datetime
-import os
+#import asyncio
 import sys
 import json
 
