@@ -47,6 +47,7 @@ class AdminStates(StatesGroup):
 
 
 async def on_startup(dispatcher: Dispatcher) -> None:
+    """Создается стартовое меню"""
     await bot.set_my_commands([
         types.BotCommand('start', 'ЗАПУСК'),
         types.BotCommand('menu', 'Главное меню'),
@@ -58,6 +59,7 @@ async def on_startup(dispatcher: Dispatcher) -> None:
 
 @dp.message_handler(commands=['start'])
 async def start(message: Message):
+    """Функция обрабатывает команду <start> принимает Message, ничего не возвращает (None)"""
     info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} '\
            f'(@{message.from_user.username}) подключился {message.date}'
     logger.info(info)
@@ -79,7 +81,8 @@ async def start(message: Message):
 
 @dp.message_handler(commands=['menu'])
 @dp.message_handler(text=['< в главное меню'])
-async def back_start_menu(message: Message):
+async def back_start_menu(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <в главное меню> принимает Message, ничего не возвращает (None)"""
     global reg_loc_button
     # для start_kb reg_loc_button - invisible:
     reg_loc_button[(message.from_id, 'visible')] = False
@@ -87,13 +90,14 @@ async def back_start_menu(message: Message):
 
 
 @dp.callback_query_handler(text='back_user_profile')
-async def back_user_profile(call: CallbackQuery):
+async def back_user_profile(call: CallbackQuery) -> None:
     await call.message.answer('Меню пользователя:', reply_markup=kb.user_profile_kb)
     await call.answer()
 
 
 @dp.message_handler(content_types=['location'])
-async def check_location(message: Message):
+async def check_location(message: Message) -> None:
+    """Функция обрабатывает сообщение с геолокацией пользователя, ничего не возвращает (None)"""
     global reg_loc_button
     if db.user_started_work(message.from_id) == 0:
         reg_loc_button[(message.from_id, 'visible')] = False
@@ -108,7 +112,8 @@ async def check_location(message: Message):
 
 
 @dp.message_handler(text='Свой профиль')
-async def user_profile(message: Message):
+async def user_profile(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <Ваш профиль> принимает Message, ничего не возвращает (None)"""
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
@@ -119,14 +124,14 @@ async def user_profile(message: Message):
 
 
 @dp.callback_query_handler(text='update_user_from_telegram')
-async def update_user_from_telegram(call: CallbackQuery):
+async def update_user_from_telegram(call: CallbackQuery) -> None:
     db.update_user_from_tg(call.from_user)
     await call.message.answer('Обновлено из telegram-профиля', reply_markup=kb.user_profile_kb)
     await call.answer()
 
 
 @dp.callback_query_handler(text='update_user_by_user')
-async def update_user_by_user(call: CallbackQuery):
+async def update_user_by_user(call: CallbackQuery) -> None:
     await call.message.answer('Введите имя поля и его значение через пробел, например:\n'
                               'last_name Менделеев')
     await call.answer()
@@ -153,7 +158,8 @@ async def update_user_param(message: Message, state) -> None:
 
 @dp.message_handler(commands=['help'])
 @dp.message_handler(text=['Поддержка'])
-async def helper(message: Message):
+async def helper(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <Поддержка> принимает Message, ничего не возвращает (None)"""
     await message.answer(text='Помощь / поддержка', reply_markup=kb.help_kb)
 
 
@@ -184,7 +190,8 @@ async def support_contacts(call: CallbackQuery):
 
 
 @dp.message_handler(text='Открыть задание')
-async def open_task(message: Message):
+async def open_task(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <Открыть задание> принимает Message, ничего не возвращает (None)"""
     global input_data
     global reg_loc_button  # для start_kb reg_loc_button - invisible:
     reg_loc_button[(message.from_id, 'visible')] = False
@@ -202,7 +209,8 @@ async def open_task(message: Message):
 
 
 @dp.message_handler(text='Приборная база')
-async def devices_base(message: Message):
+async def devices_base(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <Приборная база> принимает Message, ничего не возвращает (None)"""
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
@@ -210,7 +218,13 @@ async def devices_base(message: Message):
 
 
 @dp.message_handler(text='Начать работу >')
-async def start_work(message: Message):
+async def start_work(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <Начать работу> принимает Message, ничего не возвращает (None)
+     - отмечает в БД, что пользователь приступил к работам в поле;
+     - включает видимость кнопки "Зарегистрировать точку" на inline-клавиатуре, которая прикрепляется при ответе
+     на запрос геопозиции;
+     - меняет клавиатуру с "главной" на "рабочую"
+    """
     if db.user_is_active(message.from_id) == 0:
         await message.answer(text='Ваш профиль пока не активирован, обратитесь в поддержку.')
         return
@@ -222,7 +236,8 @@ async def start_work(message: Message):
 
 
 @dp.message_handler(text='Текущий прогресс')
-async def current_progress_info(message: Message):
+async def current_progress_info(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <Текущий прогресс> принимает Message, ничего не возвращает (None)"""
     if db.user_started_work(message.from_id) == 0:
         await message.answer(text='Сначала, пожалуйста, нажмите "Начать работу".')
         return
@@ -277,6 +292,12 @@ async def users_in_the_field(call: CallbackQuery):
 
 @dp.message_handler(commands=['end'])
 async def end(message: Message):
+    """Функция обрабатывает сообщение по команде /end принимает Message, ничего не возвращает (None)
+     - отмечает в БД, что пользователь завершил работы в поле;
+     - выключает видимость кнопки "Зарегистрировать точку" на inline-клавиатуре, которая прикрепляется при ответе
+     на запрос геопозиции;
+     - убирает клавиатуру
+    """
     global reg_loc_button
     reg_loc_button[(message.from_id, 'visible')] = False
     info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} '\
@@ -298,10 +319,11 @@ async def rm_command(message: types.Message):
 
 @dp.message_handler(commands=['admin'])
 async def admin(message: Message):
+    """Функция открывает панель администратора (координатора), выполнив предварительную проверку по его id"""
     if message.from_id in config.admins:
         await message.answer('Панель администратора', reply_markup=kb.admin_kb)
     else:
-        await message.answer('Команда не распознана, для начала, пожалуйста, нажмите на /start')
+        await message.answer('Команда не распознана, для начала, пожалуйста, нажмите на /start или /menu')
 
 
 @dp.callback_query_handler(text='back_admin_panel')
@@ -514,10 +536,11 @@ async def set_complect(message: Message, state) -> None:
 
 @dp.message_handler(text='Снять прибор')
 async def pick_device_up(message: Message) -> None:
+    """Функция обрабатывает сообщение по кнопке <> принимает Message, ничего не возвращает (None)"""
     if db.user_started_work(message.from_id) == 0:
         await message.answer(text='Ваш пользователь не отмечен в поле.\nПожалуйста, нажмите "Начать работу".')
         return
-    await message.answer(text='<b>Выберите имя точки, на которой завершаете рагистрацию:</b>', parse_mode='html',
+    await message.answer(text='<b>Выберите имя точки, на которой завершаете регистрацию:</b>', parse_mode='html',
                          reply_markup=kb.points_kb(input_data['Point_ID']))
     await EndStates.pickup_point_id.set()
 
