@@ -2,6 +2,7 @@ import pandas as pd
 import settings
 import config
 
+
 def get_devices_description(GroupID: str) -> tuple[str, str, str]:
     """Возвращает информацию о типах устройств из приборной базы"""
     # вначале заполним по-умолчанию из предположения, что возникла ошибка:
@@ -24,6 +25,7 @@ def get_devices_description(GroupID: str) -> tuple[str, str, str]:
     url = list(df['URL'])[0]
 
     return DeviceModel, Description, url
+
 
 if __name__ == '__main__':
     for j, gid in enumerate(settings.devices_groups):

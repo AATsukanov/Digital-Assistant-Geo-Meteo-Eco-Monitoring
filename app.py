@@ -16,12 +16,16 @@ from earth import StaticEarth
 import database as db
 import docs
 
+
 def onewtreadecorator(func):
     '''Декорируем функции, которые хотим запустить в параллельном потоке'''
+
     def wrapper(*args, **kwargs):
         thread = threading.Thread(target=lambda: func(*args, **kwargs))
         thread.start()
+
     return wrapper
+
 
 class App(tk.Tk):
 
@@ -85,10 +89,13 @@ class App(tk.Tk):
         self.menu_db.add_command(label='Инициализация users.db: Users, Admins', command=self.on_db_init_users)
         self.menu_db.add_command(label='Инициализация project.db: Points, Devices', command=self.on_db_init_project)
         self.menu_db.add_separator()
-        self.menu_db.add_command(label='Перезаполненить Points в project.db', command=self.on_refill_point_in_project_db)
-        self.menu_db.add_command(label='Перезаполненить Devices в project.db', command=self.on_refill_devices_in_project_db)
+        self.menu_db.add_command(label='Перезаполненить Points в project.db',
+                                 command=self.on_refill_point_in_project_db)
+        self.menu_db.add_command(label='Перезаполненить Devices в project.db',
+                                 command=self.on_refill_devices_in_project_db)
         self.menu_db.add_separator()
-        self.menu_db.add_command(label='Очистить таблицу Points в project.db', command=self.on_clear_point_in_project_db)
+        self.menu_db.add_command(label='Очистить таблицу Points в project.db',
+                                 command=self.on_clear_point_in_project_db)
         self.menu_db.add_command(label='Очистить таблицу Devices в project.db',
                                  command=self.on_clear_devices_in_project_db)
         self.MenuBar.add_cascade(label='Управление БД', menu=self.menu_db)
@@ -111,15 +118,14 @@ class App(tk.Tk):
         self.language = tk.StringVar()
         self.language.set(settings.default_language)
         self.language.trace('w', self.on_change_language)
-        #language_img = tk.PhotoImage(file=config.language_icon)
+        # language_img = tk.PhotoImage(file=config.language_icon)
         self.menu_language.add_radiobutton(label='Русский (Ru)', value='Ru', variable=self.language)
         self.menu_language.add_radiobutton(label='中文 (Cn)', value='Cn', variable=self.language)
-        #self.MenuBar.add_cascade(image=language_img, compound="left", menu=self.menu_language)
+        # self.MenuBar.add_cascade(image=language_img, compound="left", menu=self.menu_language)
         self.MenuBar.add_cascade(label='Ru/中文', menu=self.menu_language)
 
         # configure:
         self.config(menu=self.MenuBar)
-
 
     def on_open_xlsx(self) -> None:
         fname = tkfd.askopenfilename(filetypes=[('Таблица Excel', '*.xlsx'), ('Все файлы', '*.*')])
@@ -138,10 +144,8 @@ class App(tk.Tk):
     def on_open_kml(self):
         pass
 
-
     def on_open_gpx(self):
         pass
-
 
     def on_refill_point_in_project_db(self) -> bool:
         if self.task.nPoints > 0:
@@ -164,7 +168,6 @@ class App(tk.Tk):
         else:
             print('ИНФО: таблица Points в базе данных не найдена')
 
-
     def on_refill_devices_in_project_db(self) -> bool:
         if self.task.nComplects > 0:
             db.refill_complects(ComplectsID=list(self.task.df_of_complects["ComplectID"]))
@@ -175,7 +178,6 @@ class App(tk.Tk):
                       message='Таблица комплектов не загружена, пожалуйста, создайте задание.')
         return False
 
-
     def on_clear_devices_in_project_db(self) -> None:
         if os.path.isfile('databases/project.db'):
             db.clear_complects()
@@ -183,13 +185,12 @@ class App(tk.Tk):
         else:
             print('ИНФО: таблица Devices в базе данных не найдена')
 
-
     def on_create_task(self, write_subgroups_to_excel=False, echo=True) -> bool:
         """Это основная функция, в которой собирается задание
         и подготавливается к отправке в telegram-бот."""
 
         if self.task.nPoints < 1:
-            msg = 'Похоже, проект не загружен, либо не содержит плановых точек.\n'\
+            msg = 'Похоже, проект не загружен, либо не содержит плановых точек.\n' \
                   'Пожалуйста, загрузите Таблицу точек проекта:\nМеню -> Файл -> Открыть задание из *.xlsx'
             tkmb.showinfo(parent=self, title='Создание задания', message=msg)
             return False
@@ -285,12 +286,9 @@ class App(tk.Tk):
             stat += f'Диапазон значений долготы:\nот {min(self.task.E_WGS84)} до {max(self.task.E_WGS84)}\n\n'
             stat += f'Наименование ID точек:\nпервая {self.task.Point_ID[0]}, последняя {self.task.Point_ID[-1]}'
         else:
-            stat += 'Похоже, проект не загружен, либо не содержит плановых точек.\n'\
+            stat += 'Похоже, проект не загружен, либо не содержит плановых точек.\n' \
                     'Пожалуйста, загрузите Таблицу точек проекта: Меню -> Файл -> Открыть задание из *.xlsx'
         tkmb.showinfo(parent=self, title='Статистика проекта', message=stat)
-
-
-
 
     @onewtreadecorator
     def on_run_telegram_bot(self):
@@ -298,7 +296,6 @@ class App(tk.Tk):
         cmd_line = f'python main.py {self.exchange_data_json}'
         print(f'командой: {os.getcwd()}> {cmd_line}')
         os.system(cmd_line)
-
 
     def on_db_init_users(self):
         file_db = 'databases/users.db'
@@ -328,7 +325,6 @@ class App(tk.Tk):
         # Выводит изображение из файла на "холст":
         self.photo_image = tk.PhotoImage(file=fname)
         self.canvas.itemconfigure(self.img_tag, image=self.photo_image)
-
 
     def on_help(self):
         tkmb.showinfo(title='Описание хода работ при использовании программы',
@@ -360,11 +356,13 @@ class App(tk.Tk):
             return
         self.destroy()
 
+
 def main():
     print(f'"{config.app_title}", версия = {config.version}')
     print(f'(by {config.AuthorInfo.author})')
     app = App()
     app.mainloop()
+
 
 # MAIN:
 if __name__ == '__main__':

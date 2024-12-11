@@ -25,7 +25,7 @@ if __name__ == '__main__':
     logger.info('Тестовое сообщение INFO в log...')
     logger.warning('Тестовое сообщение WARNING в log...')
     logger.error('Тестовое сообщение ERROR в log...')
-    #print(3 / (2 - 2))
+    # print(3 / (2 - 2))
 
 '''
 logging.basicConfig(level=logging.INFO, filename=f'logs/log.{datetime.date.today()}.txt', filemode='a',

@@ -3,6 +3,7 @@ import os
 
 import settings
 
+
 class StaticEarth(object):
     # простая работа с растровыми картами:
     # https://yandex.ru/dev/staticapi/doc/ru/request/markers
@@ -27,7 +28,7 @@ class StaticEarth(object):
         self.xPointsLon: list[float] = []
         self.yPointsLat: list[float] = []
         self.PointsStatus: list[str] = []  # 'Я' -- значок своего положения, 'Т' -- точка, 'П' -- точка с прибором
-        #self.styler = '&style=elements:geometry|stylers.hue:0d69f2~elements:label.icon|stylers.hue:0d69f2~elements:label.text.fill|stylers.color:083f91'
+        # self.styler = '&style=elements:geometry|stylers.hue:0d69f2~elements:label.icon|stylers.hue:0d69f2~elements:label.text.fill|stylers.color:083f91'
         self.MAX_N_POINTS: int = 99  # ограничение static карт
 
     def copy_points(self, longitude: list[float], latitude: list[float], status: list[str]):
@@ -92,7 +93,6 @@ class StaticEarth(object):
         self.current_map_request = URL
         return self.current_map_request
 
-
     def _make_fname(self):
         fname = f'_temp_yandex_{self.mode}_'
         if self.mode != 'AUTO':
@@ -110,7 +110,6 @@ class StaticEarth(object):
                 j += 1
             return fname + f'.{j}.png'
         return fname + '.png'
-
 
     def load_map(self) -> str:
         '''При успешном завершении запроса функция возвращает str
@@ -141,21 +140,21 @@ class StaticEarth(object):
 class Earth:
 
     @staticmethod
-    def make_maps_yandex_url(lat: float, lon: float, zoom: int=15) -> str:
+    def make_maps_yandex_url(lat: float, lon: float, zoom: int = 15) -> str:
         url = f'https://yandex.ru/maps/?ll={lon}%2C{lat}&z={zoom}'
         return url
 
     @staticmethod
-    def make_openstreetmap_url(lat: float, lon: float, zoom: int=18) -> str:
+    def make_openstreetmap_url(lat: float, lon: float, zoom: int = 18) -> str:
         url = f'https://www.openstreetmap.org/#map={zoom}/{lat}/{lon}'
         return url
 
     @staticmethod
-    def make_maps_google_url(lat: float, lon: float, zoom: int=15) -> str:
+    def make_maps_google_url(lat: float, lon: float, zoom: int = 15) -> str:
         url = f'https://www.google.com/maps/@{lat},{lon},{zoom}z'
         return url
 
     @staticmethod
-    def make_maps_nakarte_url(lat: float, lon: float, zoom: int=17) -> str:
+    def make_maps_nakarte_url(lat: float, lon: float, zoom: int = 17) -> str:
         url = f'https://nakarte.me/#m={zoom}/{lat}/{lon}&l=O'
         return url

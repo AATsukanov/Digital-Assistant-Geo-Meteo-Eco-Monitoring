@@ -14,7 +14,7 @@ start_kb = ReplyKeyboardMarkup(
             KeyboardButton(text='Свой профиль'),
         ],
         [
-            KeyboardButton(text='Проверить свою геолокацию', request_location=True,)
+            KeyboardButton(text='Проверить свою геолокацию', request_location=True, )
         ],
         [
             KeyboardButton(text='Поддержка'),
@@ -45,14 +45,12 @@ activate_deactivate_kb = InlineKeyboardMarkup(
     ], resize_keyboard=True
 )
 
-
 user_profile_kb = InlineKeyboardMarkup(
     inline_keyboard=[
         [InlineKeyboardButton(text='Подгрузить из tg-профиля', callback_data='update_user_from_telegram')],
         [InlineKeyboardButton(text='Заполнить данные вручную', callback_data='update_user_by_user')],
     ], resize_keyboard=True
 )
-
 
 help_kb = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -112,6 +110,7 @@ def points_kb(points_list: list[str]) -> ReplyKeyboardMarkup:
         kb.insert(KeyboardButton(text=pid))
     return kb
 
+
 def points_adpt_kb(points_list: list[str]) -> ReplyKeyboardMarkup:
     kb = ReplyKeyboardMarkup(resize_keyboard=True)
     row = []
@@ -132,7 +131,7 @@ def url_kb(url: str) -> InlineKeyboardMarkup:
 
 
 def make_map_kb(lat: float, lon: float,
-                reg_loc_button_visible: bool=False, reg_loc_button_label: str = '') -> InlineKeyboardMarkup:
+                reg_loc_button_visible: bool = False, reg_loc_button_label: str = '') -> InlineKeyboardMarkup:
     inline_kb = InlineKeyboardMarkup()
     b11 = InlineKeyboardButton(text='Яндекс карта',
                                url=Earth.make_maps_yandex_url(lat, lon, settings.maps_zoom['yandex']))
@@ -149,6 +148,7 @@ def make_map_kb(lat: float, lon: float,
                                   callback_data=json.dumps({'#': 'Setup', 'lat': lat, 'lon': lon}))
         inline_kb.row(b3)
     return inline_kb
+
 
 field_info_kb = InlineKeyboardMarkup(
     inline_keyboard=[
@@ -169,5 +169,3 @@ work_menu_kb = ReplyKeyboardMarkup(
         ]
     ], resize_keyboard=True
 )
-
-

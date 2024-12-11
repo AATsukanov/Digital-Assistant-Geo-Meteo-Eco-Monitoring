@@ -5,6 +5,7 @@ from datatypes import User, Admin
 from datatypes import user_changeable_columns
 import settings
 
+
 def init_project_db():
     """Создает две таблицы в project.db"""
 
@@ -254,7 +255,6 @@ def set_point_start(point_id: str, lat_fact: float, lon_fact: float,
         connection.close()
         return f'Извините, возникла ошибка при работе с базой данных точек проекта:\n{exc}'
 
-
     cid_check = cursor.execute('SELECT * FROM Devices WHERE ComplectID=?', (complect_id,))
 
     if cid_check.fetchone() is None:
@@ -263,8 +263,9 @@ def set_point_start(point_id: str, lat_fact: float, lon_fact: float,
 
     try:
         # Запись: в Таблицу Devices
-        cursor.execute('UPDATE Devices SET (status, PointID, UserID, datetime_start) = (?, ?, ?, ?) WHERE ComplectID = ?',
-                       ('установлен', point_id, user_id, str(datetime_start), complect_id))
+        cursor.execute(
+            'UPDATE Devices SET (status, PointID, UserID, datetime_start) = (?, ?, ?, ?) WHERE ComplectID = ?',
+            ('установлен', point_id, user_id, str(datetime_start), complect_id))
     except sqlite3.DatabaseError as exc:
         connection.close()
         return f'Извините, возникла ошибка при работе с базой данных приборов:\n{exc}'
@@ -319,6 +320,7 @@ def set_complect_free(complect_id: str) -> str:
 '''Далее блок CRUD-функций для Users и Admins
 =============================================='''
 
+
 def add_admins():
     """Впервые в db прописываются только id (telegram.id) admin-пользователей,
     далее при их подключении по их желанию, подтягиваются данные и заполняются остальные поля."""
@@ -337,7 +339,7 @@ def add_admins():
     connection.close()
 
 
-def is_user_in_db(user_id: int, echo: bool=False) -> bool:
+def is_user_in_db(user_id: int, echo: bool = False) -> bool:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
     check_user = cursor.execute('SELECT * FROM Users WHERE id=?', (user_id,))
@@ -350,7 +352,7 @@ def is_user_in_db(user_id: int, echo: bool=False) -> bool:
         return True
 
 
-def add_user(user: User, echo: bool=True):
+def add_user(user: User, echo: bool = True):
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
 
@@ -396,6 +398,7 @@ def update_user(user_id: int, column_name: str, value: str) -> bool:
         connection.close()
         return False
 
+
 def update_user_from_tg(user_tg: aiotypes.user.User) -> bool:
     user = User(user_tg.id)
     user.fill_from_tg(user_tg)
@@ -430,6 +433,7 @@ def update_admin(admin: Admin) -> bool:
     else:
         connection.close()
         return False
+
 
 def get_user(user_id: int) -> str:
     connection = sqlite3.connect('databases/users.db')
@@ -480,6 +484,7 @@ def get_users_in_the_field():
     connection.close()
     return msg
 
+
 def get_admins():
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
@@ -496,7 +501,7 @@ def get_admins():
 def get_admin(admin_id: int) -> str:
     connection = sqlite3.connect('databases/users.db')
     cursor = connection.cursor()
-    admin = cursor.execute('SELECT * FROM Admins WHERE id = ?', (admin_id, )).fetchone()
+    admin = cursor.execute('SELECT * FROM Admins WHERE id = ?', (admin_id,)).fetchone()
     msg = f'{admin[0]}: {admin[1]} {admin[2]} @{admin[3]} ({admin[4]})'
     connection.close()
     return msg
@@ -546,6 +551,7 @@ def user_started_work(user_id: int) -> bool:
     else:
         connection.close()
         return False
+
 
 def user_completed_work(user_id: int) -> bool:
     '''Делает отметку о том, что специалист закончил полевую работу,

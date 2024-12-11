@@ -1,9 +1,9 @@
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
-#from aiogram.dispatcher import FSMContext
+# from aiogram.dispatcher import FSMContext
 from aiogram.types import Message, CallbackQuery
-#import asyncio
+# import asyncio
 import sys
 import json
 
@@ -52,7 +52,7 @@ async def on_startup(dispatcher: Dispatcher) -> None:
         types.BotCommand('start', 'ЗАПУСК'),
         types.BotCommand('menu', 'Главное меню'),
         types.BotCommand('rm', 'Очистить клавиатуру'),
-        types.BotCommand('help',  'Помощь'),
+        types.BotCommand('help', 'Помощь'),
         types.BotCommand('end', 'Завершить')
     ])
 
@@ -60,7 +60,7 @@ async def on_startup(dispatcher: Dispatcher) -> None:
 @dp.message_handler(commands=['start'])
 async def start(message: Message):
     """Функция обрабатывает команду <start> принимает Message, ничего не возвращает (None)"""
-    info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} '\
+    info = f'Специалист {message.from_user.first_name} {message.from_user.last_name} ' \
            f'(@{message.from_user.username}) подключился {message.date}'
     logger.info(info)
     # Проверяем пользователя в users.db и добавляем его открытые данные, если его нет:
@@ -300,7 +300,7 @@ async def end(message: Message):
     """
     global reg_loc_button
     reg_loc_button[(message.from_id, 'visible')] = False
-    info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} '\
+    info = f'{message.date}: Специалист {message.from_user.first_name} {message.from_user.last_name} ' \
            f'(@{message.from_user.username}, {message.from_id}) нажал "/end"'
     logger.info(info)
     if db.user_completed_work(user_id=message.from_id):
@@ -599,6 +599,7 @@ def main(skip_updates: bool = True, echo: bool = False) -> None:
 
     # Запуск основного цикла telegram-бота:
     executor.start_polling(dp, skip_updates=skip_updates, on_startup=on_startup)
+
 
 if __name__ == '__main__':
     main()

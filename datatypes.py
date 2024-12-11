@@ -8,6 +8,7 @@ import json
 
 import settings
 
+
 class Task:
 
     def __init__(self):
@@ -96,7 +97,8 @@ class Task:
         self.subgroups_dict: dict = {}
         for GroupID in sorted(list(set(self.df_of_complects['GroupID']))):
             sub = {}
-            for subgroup in sorted(list(set(self.df_of_complects[self.df_of_complects['GroupID'] == GroupID]['SubGroups']))):
+            for subgroup in sorted(
+                    list(set(self.df_of_complects[self.df_of_complects['GroupID'] == GroupID]['SubGroups']))):
                 complects_list = self.df_of_complects[self.df_of_complects['SubGroups'] == subgroup]
                 complects_list = sorted(list(complects_list['ComplectID']))
                 if len(complects_list) > 0:
