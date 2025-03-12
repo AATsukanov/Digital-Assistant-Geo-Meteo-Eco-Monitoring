@@ -384,7 +384,13 @@ https://scholar.google.ru/citations?user=4LlptA8AAAAJ&hl=ru&oi=ao
 
 https://tsukanov-lab.moy.su/index/tsukanov_lab/0-2
 
+https://tsukanov-lab.moy.su/index/geomodels/0-4
+
 https://orcid.org/0000-0003-2706-2247
+
+https://gitlab.com/AATsukanov
+
+https://gitverse.ru/tsukanov
 
 https://github.com/AATsukanov
 
