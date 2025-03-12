@@ -57,9 +57,23 @@ class App(tk.Tk):
         self.MenuBar = tk.Menu(self)
         # Menu->File:
         self.menu_file = tk.Menu(self.MenuBar, tearoff=0)
-        self.menu_file.add_command(label='Открыть задание из *.xlsx', command=self.on_open_xlsx)
-        self.menu_file.add_command(label='Загрузить метки из *.kml', state=tk.DISABLED, command=self.on_open_kml)
-        self.menu_file.add_command(label='Загрузить метки из *.gpx', state=tk.DISABLED, command=self.on_open_gpx)
+        self.menu_file.add_command(label='Открыть проект (Pro)', state=tk.DISABLED, command=self.on_pass)
+        self.menu_file.add_command(label='Сохранить проект (Pro)', state=tk.DISABLED, command=self.on_pass)
+        self.menu_file.add_command(label='Сохранить проект как (Pro)', state=tk.DISABLED, command=self.on_pass)
+        self.menu_file.add_command(label='Закрыть проект (Pro)', state=tk.DISABLED, command=self.on_pass)
+        self.menu_file.add_separator()
+        self.menu_file.add_command(label='Открыть задание из *.xlsx (Pro)', command=self.on_open_xlsx)
+        self.menu_file.add_command(label='Загрузить метки из *.kml (Pro)', state=tk.DISABLED, command=self.on_open_kml)
+        self.menu_file.add_command(label='Загрузить метки из *.gpx (Pro)', state=tk.DISABLED, command=self.on_open_gpx)
+        self.menu_file.add_command(label='Загрузить метки из *.geojson (Pro)', state=tk.DISABLED, command=self.on_pass)
+        self.menu_file.add_separator()
+        self.menu_file.add_command(label='Экспортировать точки в Таблицу *.xlsx (Pro)', state=tk.DISABLED,
+                                   command=self.on_pass)
+        self.menu_file.add_command(label='Экспортировать в *.kml (Pro)', state=tk.DISABLED, command=self.on_pass)
+        self.menu_file.add_command(label='Экспортировать в *.gpx (Pro)', state=tk.DISABLED, command=self.on_pass)
+        self.menu_file.add_separator()
+        self.menu_file.add_command(label='Загрузить метки из *.kml (Pro)', state=tk.DISABLED, command=self.on_open_kml)
+        self.menu_file.add_command(label='Загрузить метки из *.gpx (pro)', state=tk.DISABLED, command=self.on_open_gpx)
         self.menu_file.add_separator()
         self.menu_file.add_command(label='Статистика проекта', command=self.on_project_stat)
         self.menu_file.add_command(label='Сведения', command=self.on_about)
@@ -70,10 +84,10 @@ class App(tk.Tk):
         # Menu->Проект:
         self.menu_project = tk.Menu(self.MenuBar, tearoff=0)
         self.menu_project.add_command(label='Загрузить таблицу точек из *.xlsx', command=self.on_open_xlsx)
-        self.menu_project.add_command(label='Статистика проекта', command=self.on_project_stat)
+        self.menu_project.add_command(label='Сгенерировать линейный профиль (Pro)', state=tk.DISABLED,
+                                      command=self.on_pass)
         self.menu_project.add_separator()
         self.menu_project.add_command(label='Создать проектное задание', command=self.on_create_task)
-        self.menu_project.add_separator()
         self.menu_project.add_command(label='Запустить Telegram-бота', command=self.on_run_telegram_bot)
         self.MenuBar.add_cascade(label='Проект', menu=self.menu_project)
 
@@ -83,6 +97,10 @@ class App(tk.Tk):
         self.menu_tg_bot.add_separator()
         self.menu_tg_bot.add_command(label='Запустить Telegram-бота', command=self.on_run_telegram_bot)
         self.MenuBar.add_cascade(label='Telegram-бот', menu=self.menu_tg_bot)
+
+        # Menu->Карты:
+        self.menu_maps = tk.Menu(self.MenuBar, tearoff=0)
+        self.MenuBar.add_cascade(label='Карты', state=tk.DISABLED, menu=self.menu_maps)
 
         # Menu->Управление БД:
         self.menu_db = tk.Menu(self.MenuBar, tearoff=0)
@@ -142,10 +160,14 @@ class App(tk.Tk):
             self.fname_map_image = fname_map
 
     def on_open_kml(self):
-        pass
+        self.on_pass()
 
     def on_open_gpx(self):
-        pass
+        self.on_pass()
+
+    @staticmethod
+    def on_pass():
+        print('ВНИМАНИЕ: данный функционал доступен только в версии Pro.')
 
     def on_refill_point_in_project_db(self) -> bool:
         if self.task.nPoints > 0:
@@ -249,7 +271,7 @@ class App(tk.Tk):
                                                prompt='Описание, важные замечания к заданию, детали проекта, '
                                                       'особенности проведения полевых работ можно указать здесь '
                                                       '(в свободной форме) для полевых специалистов:',
-                                               initialvalue='Дипломный проект для Urban University (А.Цуканов, 2024)')
+                                               initialvalue='Демонстрационный проект для версии Lite (А.Цуканов, 2025)')
 
         # освежаем базу данных с проектным заданием:
         self.on_refill_point_in_project_db()

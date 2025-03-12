@@ -1,8 +1,8 @@
 import tsukanoff  # Внимание: этот файл в gitignore, для работы настройте свой.
 from dataclasses import dataclass
 
-version = '0.0.1'
-app_title = u'Цифровой Ассистент Системы Геомониторинга'
+version = '0.0.2'
+app_title = u'Цифровой Ассистент Системы Геомониторинга Lite'
 iconbitmap = 'icon.ico'
 
 welcome_img = 'img/wpwd.png'

@@ -51,10 +51,25 @@ async def on_startup(dispatcher: Dispatcher) -> None:
     await bot.set_my_commands([
         types.BotCommand('start', 'ЗАПУСК'),
         types.BotCommand('menu', 'Главное меню'),
+        types.BotCommand('cancel', 'Отмена'),
         types.BotCommand('rm', 'Очистить клавиатуру'),
         types.BotCommand('help', 'Помощь'),
         types.BotCommand('end', 'Завершить')
     ])
+
+
+@dp.message_handler(state='*', commands=['', 'cancel'])
+async def cancel_handler(message: types.Message, state):
+    """Для отмены действий по машине состояний, если есть"""
+
+    if not reg_loc_button.get((message.from_id, 'visible'), False):
+        reply_markup = kb.start_kb
+    else:
+        reply_markup = kb.work_menu_kb
+
+    await message.answer('Текущее действие отменено пользователем по команде <i>слэш</i> "<b>/</b>" или "/cancel"',
+                         parse_mode='html', reply_markup=reply_markup)
+    await state.finish()
 
 
 @dp.message_handler(commands=['start'])
