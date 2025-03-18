@@ -6,6 +6,7 @@ from aiogram.types import Message, CallbackQuery
 # import asyncio
 import sys
 import json
+import os
 
 # импорт своих модулей
 import config
@@ -603,6 +604,24 @@ def main(skip_updates: bool = True, echo: bool = False) -> None:
         for j, param in enumerate(sys.argv):
             print(f'аргументы: sys.argv[j] = {param}')
         print('Количество аргументов:', len(sys.argv))
+
+    # Расположение задания и других json-данных от приложения (app)
+    # передается вторым (т.е. [1]) аргументом в команде запуска бота:
+    if echo:
+        for j, param in enumerate(sys.argv):
+            print(f'аргументы: sys.argv[j] = {param}')
+        print('Количество аргументов:', len(sys.argv))
+
+    if len(sys.argv) < 2:
+        print('ВНИМАНИЕ: Файл с проектом не передан в параметрах, запуск telegram-бота отменен.')
+        return
+
+    # проверяем наличие файла с параметрами задания:
+    if not os.path.isfile(sys.argv[1]):
+        print(f'ВНИМАНИЕ: Файл *.json с параметрами задания {sys.argv[1]} от desktop-приложения не найден.'
+              '\nВНИМАНИЕ: Необходимо сначала создать задание: перейдите в меню '
+              '"Проект" -> "Создать проектное задание"...')
+        return
 
     # читаем и декодируем из json, если файл передан:
     if len(sys.argv) > 1:
