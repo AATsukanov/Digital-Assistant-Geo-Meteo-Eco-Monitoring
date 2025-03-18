@@ -62,7 +62,7 @@ class App(tk.Tk):
         self.menu_file.add_command(label='Сохранить проект как (Pro)', state=tk.DISABLED, command=self.on_pass)
         self.menu_file.add_command(label='Закрыть проект (Pro)', state=tk.DISABLED, command=self.on_pass)
         self.menu_file.add_separator()
-        self.menu_file.add_command(label='Открыть задание из *.xlsx (Pro)', command=self.on_open_xlsx)
+        self.menu_file.add_command(label='Открыть задание из *.xlsx', command=self.on_open_xlsx)
         self.menu_file.add_command(label='Загрузить метки из *.kml (Pro)', state=tk.DISABLED, command=self.on_open_kml)
         self.menu_file.add_command(label='Загрузить метки из *.gpx (Pro)', state=tk.DISABLED, command=self.on_open_gpx)
         self.menu_file.add_command(label='Загрузить метки из *.geojson (Pro)', state=tk.DISABLED, command=self.on_pass)
@@ -100,7 +100,7 @@ class App(tk.Tk):
 
         # Menu->Карты:
         self.menu_maps = tk.Menu(self.MenuBar, tearoff=0)
-        self.MenuBar.add_cascade(label='Карты', state=tk.DISABLED, menu=self.menu_maps)
+        self.MenuBar.add_cascade(label='Карты (Pro)', state=tk.DISABLED, menu=self.menu_maps)
 
         # Menu->Управление БД:
         self.menu_db = tk.Menu(self.MenuBar, tearoff=0)
