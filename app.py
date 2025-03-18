@@ -107,9 +107,9 @@ class App(tk.Tk):
         self.menu_db.add_command(label='Инициализация users.db: Users, Admins', command=self.on_db_init_users)
         self.menu_db.add_command(label='Инициализация project.db: Points, Devices', command=self.on_db_init_project)
         self.menu_db.add_separator()
-        self.menu_db.add_command(label='Перезаполненить Points в project.db',
+        self.menu_db.add_command(label='Перезаполнить Points в project.db',
                                  command=self.on_refill_point_in_project_db)
-        self.menu_db.add_command(label='Перезаполненить Devices в project.db',
+        self.menu_db.add_command(label='Перезаполнить Devices в project.db',
                                  command=self.on_refill_devices_in_project_db)
         self.menu_db.add_separator()
         self.menu_db.add_command(label='Очистить таблицу Points в project.db',
