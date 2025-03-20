@@ -14,14 +14,14 @@ start_kb = ReplyKeyboardMarkup(
             KeyboardButton(text='Свой профиль'),
         ],
         [
-            KeyboardButton(text='Проверить свою геолокацию', request_location=True, )
+            KeyboardButton(text='Проверить свою геолокацию 🗺️', request_location=True, )
         ],
         [
             KeyboardButton(text='Поддержка'),
             KeyboardButton(text='Приборная база')
         ],
         [
-            KeyboardButton(text='Начать работу >')
+            KeyboardButton(text='Начать работу »')
         ]
     ], resize_keyboard=True
 )
@@ -41,7 +41,7 @@ activate_deactivate_kb = InlineKeyboardMarkup(
             InlineKeyboardButton(text='Активир.', callback_data='activate_user'),
             InlineKeyboardButton(text='Деактив.', callback_data='deactivate_user')
         ],
-        [InlineKeyboardButton(text=' < назад', callback_data='back_admin_panel')]
+        [InlineKeyboardButton(text=' « назад', callback_data='back_admin_panel')]
     ], resize_keyboard=True
 )
 
@@ -165,7 +165,7 @@ work_menu_kb = ReplyKeyboardMarkup(
         [KeyboardButton(text='Текущий прогресс')],
         [KeyboardButton(text='Установить прибор (запрос геолокации)', request_location=True)],
         [
-            KeyboardButton(text='< в главное меню'), KeyboardButton(text='Снять прибор')
+            KeyboardButton(text='« в главное меню'), KeyboardButton(text='Снять прибор')
         ]
     ], resize_keyboard=True
 )

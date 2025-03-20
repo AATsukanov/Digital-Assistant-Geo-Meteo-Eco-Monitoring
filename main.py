@@ -96,7 +96,7 @@ async def start(message: Message):
 
 
 @dp.message_handler(commands=['menu'])
-@dp.message_handler(text=['< в главное меню'])
+@dp.message_handler(text=['« в главное меню'])
 async def back_start_menu(message: Message) -> None:
     """Функция обрабатывает сообщение по кнопке <в главное меню> принимает Message, ничего не возвращает (None)"""
     global reg_loc_button
@@ -233,7 +233,7 @@ async def devices_base(message: Message) -> None:
     await message.answer('Выберите тип прибора по GroupID:', reply_markup=kb.all_groups_kb())
 
 
-@dp.message_handler(text='Начать работу >')
+@dp.message_handler(text='Начать работу »')
 async def start_work(message: Message) -> None:
     """Функция обрабатывает сообщение по кнопке <Начать работу> принимает Message, ничего не возвращает (None)
      - отмечает в БД, что пользователь приступил к работам в поле;
